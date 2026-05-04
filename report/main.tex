@@ -11,7 +11,7 @@
 \newcommand{\code}[1]{\texttt{#1}}
 \newcommand{\placeholder}[1]{#1}
 
-\title{\textbf{MuJoCo Ortamında LiDAR Tabanlı Öğrenmeli Robot Navigasyonu}}
+\title{\textbf{MuJoCo Ortamında LNN/CfC Odaklı Öğrenmeli Robot Navigasyonu}}
 \author{Orkun Koray GÜNGÖR -- 25462877008}
 \date{6 Mayıs 2026}
 
@@ -20,13 +20,15 @@
 
 \begin{abstract}
 Bu çalışmada diferansiyel sürüşlü bir mobil robotun MuJoCo simülasyon ortamında
-engel içeren iki boyutlu haritalarda hedefe ulaşması incelenmiştir. Robotun çevre
-algısı kamera veya tam harita bilgisine dayanmamaktadır; bunun yerine 360 dereceye
-yayılan 32 ışınlı iki boyutlu LiDAR/range gözlemi kullanılmaktadır. Vize ödevi için
-ilk temel yöntem olarak GRU tabanlı bir politika, davranış klonlama ve DAgger
-yaklaşımıyla eğitilmiştir. A* planlayıcı yalnızca eğitim sırasında öğretmen etiketi
-üretmek için kullanılmış, değerlendirme aşamasında kapatılmıştır. İlk sonuçlarda iki
-manuel haritada da 4/4 başarı elde edilmiştir.
+engel içeren iki boyutlu haritalarda hedefe ulaşması incelenmiştir. Projenin ana
+hedefi, Liquid Neural Network/CfC tabanlı politikaları klasik MLP, GRU ve LSTM
+politikalarıyla aynı navigasyon sözleşmesi altında karşılaştırmaktır. Robotun çevre
+algısı kamera veya tam harita bilgisine dayanmamaktadır; bunun yerine sensör girdisi
+olarak 360 dereceye yayılan 32 ışınlı iki boyutlu LiDAR/range gözlemi kullanılmaktadır.
+Vize ödevi için bu hattın ilk çalışan referans yöntemi olarak GRU tabanlı bir politika,
+davranış klonlama ve DAgger yaklaşımıyla eğitilmiştir. A* planlayıcı yalnızca eğitim
+sırasında öğretmen etiketi üretmek için kullanılmış, değerlendirme aşamasında
+kapatılmıştır. İlk sonuçlarda iki manuel haritada da 4/4 başarı elde edilmiştir.
 \end{abstract}
 
 \section{Problem Tanımı}
@@ -39,15 +41,17 @@ hem hedef yönünü hem de yakın engelleri birlikte yorumlaması gerekir.
 
 Bu vize aşamasında odaklanan konu şudur:
 \begin{quote}
-MuJoCo ortamında LiDAR tabanlı gözlem kullanan öğrenmeli navigasyon politikalarının
-kurulması ve ilk temel yöntem olarak GRU tabanlı politikanın denenmesi.
+MuJoCo ortamında LiDAR sensör gözlemi kullanan LNN/CfC odaklı öğrenmeli navigasyon
+politikalarının kurulması ve ilk referans yöntem olarak GRU tabanlı politikanın
+denenmesi.
 \end{quote}
 
 \section{Genel Proje Planı}
 
 Projenin tamamı için planlanan çalışma akışı Tablo~\ref{tabplan} üzerinde
-özetlenmiştir. Bu teslimde ilk üç adım tamamlanmış ve ilk temel yöntem üzerinden
-sonuç alınmıştır.
+özetlenmiştir. Bu teslimde ortam, sensör sözleşmesi, manuel harita üretimi ve ilk
+çalışan referans yöntem tamamlanmıştır. LNN/CfC ana karşılaştırması bir sonraki
+deney adımı olarak planlanmıştır.
 
 \begin{table}[h]
 \centering
@@ -61,9 +65,9 @@ sonuç alınmıştır.
 \hline
 2 & Harita editörü, başlangıç/hedef noktaları ve çizgi engeller & Tamamlandı \\
 \hline
-3 & GRU + davranış klonlama + DAgger ile ilk temel yöntem & Tamamlandı \\
+3 & GRU + davranış klonlama + DAgger ile ilk çalışan baseline & Tamamlandı \\
 \hline
-4 & MLP, LSTM ve CfC/LNN ile daha uzun ve adil karşılaştırma & Sonraki adım \\
+4 & CfC/LNN modelini MLP, GRU ve LSTM ile daha uzun ve adil karşılaştırma & Sonraki adım \\
 \hline
 5 & Daha fazla harita, sensör gürültüsü ve OOD testleri & Sonraki adım \\
 \hline
@@ -99,11 +103,13 @@ Aksiyon sözleşmesi iki boyutludur: \code{[linear, angular]}. Her iki değer de
 \code{[-1, 1]} aralığında normalize edilir ve ortam içinde robotun doğrusal/açısal
 hızına dönüştürülür.
 
-\section{İlk Temel Yöntem: GRU + BC/DAgger}
+\section{İlk Baseline Yöntem: GRU + BC/DAgger}
 
-İlk temel yöntem olarak GRU tabanlı bir politika seçilmiştir. GRU seçiminin nedeni,
-robotun yalnızca anlık LiDAR ölçümlerini görmesine rağmen dar koridorlarda geçmiş
-hareket bilgisinden faydalanabilmesidir.
+Ana proje hedefi LNN/CfC tabanlı politika karşılaştırmasıdır. Ancak vize tesliminde
+önce ortamın, sensör sözleşmesinin, harita editörünün ve eğitim/değerlendirme hattının
+çalıştığını göstermek için GRU tabanlı bir baseline politika seçilmiştir. GRU seçiminin
+nedeni, robotun yalnızca anlık LiDAR ölçümlerini görmesine rağmen dar koridorlarda
+geçmiş hareket bilgisinden faydalanabilmesidir.
 
 Eğitim iki aşamalıdır:
 \begin{enumerate}
@@ -129,7 +135,7 @@ MuJoCo haritası ve robot durumu\\
 $\Downarrow$\\
 32 ışınlı LiDAR + hedef mesafesi/açısı + hız + önceki aksiyon\\
 $\Downarrow$\\
-GRU politika modeli\\
+GRU baseline politika modeli\\
 $\Downarrow$\\
 Normalize aksiyon: \code{[linear, angular]}\\
 $\Downarrow$\\
@@ -137,7 +143,7 @@ MuJoCo adımı ve yeni robot durumu\\[0.6em]
 \textit{Eğitimde: A* öğretmen etiketi üretir. Eval'de: A* kapalıdır.}
 \end{minipage}
 }
-\caption{İlk temel yöntemin veri akışı}
+\caption{İlk baseline yöntemin veri akışı}
 \label{figmethod}
 \end{figure}
 
@@ -169,7 +175,7 @@ Her iki haritada da 4 bölümün tamamı başarıyla bitmiştir.
 
 \begin{table}[h]
 \centering
-\caption{GRU + BC/DAgger saf politika sonuçları}
+\caption{GRU baseline + BC/DAgger saf politika sonuçları}
 \label{tabresults}
 \begin{tabular}{|l|c|c|c|c|c|}
 \hline
@@ -216,7 +222,7 @@ Sonuçlar aynı komutlarla yeniden üretilebilir.
 
 Kısa bir ön karşılaştırmada MLP, CfC/LNN, GRU ve LSTM modelleri aynı hat üzerinden
 çalıştırılmıştır. Kısa eğitim süresinde yalnızca GRU kısmi başarı göstermiştir; bu
-nedenle nihai model karşılaştırması için daha uzun ve adil eğitim gereklidir.
+nedenle LNN/CfC ana iddiasını değerlendirmek için daha uzun ve adil eğitim gereklidir.
 
 Sonraki aşamada planlananlar:
 \begin{itemize}
@@ -228,10 +234,11 @@ Sonraki aşamada planlananlar:
 
 \section{Sonuç}
 
-Bu vize aşamasında MuJoCo tabanlı öğrenmeli navigasyon ortamı kurulmuş, harita
-editörüyle iki manuel senaryo hazırlanmış ve ilk temel yöntem olarak GRU + BC/DAgger
-politikası uygulanmıştır. İlk sonuçlar, A* kapalı değerlendirmede iki haritada da
-başarılı navigasyon elde edildiğini göstermektedir. Bu yapı, ilerleyen aşamada model
-karşılaştırması ve daha zorlu harita testleri için temel oluşturur.
+Bu vize aşamasında LNN/CfC odaklı öğrenmeli navigasyon projesinin MuJoCo altyapısı
+kurulmuş, harita editörüyle iki manuel senaryo hazırlanmış ve ilk çalışan baseline
+olarak GRU + BC/DAgger politikası uygulanmıştır. İlk sonuçlar, A* kapalı
+değerlendirmede iki haritada da başarılı navigasyon elde edildiğini göstermektedir.
+Bu yapı, ilerleyen aşamada LNN/CfC, MLP, GRU ve LSTM politikalarının adil
+karşılaştırılması ve daha zorlu harita testleri için temel oluşturur.
 
 \end{document}
