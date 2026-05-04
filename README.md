@@ -1,13 +1,16 @@
-# MuJoCo LiDAR Tabanlı Öğrenmeli Navigasyon
+# MuJoCo LNN Tabanlı Öğrenmeli Robot Navigasyonu
 
-Bu repo, MuJoCo ortamında diferansiyel sürüşlü bir robotun LiDAR tabanlı öğrenmeli navigasyonunu denemek için hazırlanmıştır. Proje önceki Isaac/IsaacLab çalışmalarından bağımsızdır; kod içinde Isaac, IsaacLab veya `kit.exe` bağımlılığı yoktur.
+Bu repo, MuJoCo ortamında diferansiyel sürüşlü bir robot için Liquid Neural Network (LNN/CfC) odaklı öğrenmeli navigasyon denemeleri yapmak üzere hazırlanmıştır. LiDAR burada temel yöntem değil, robotun çevreyi algılamak için kullandığı sensör modelidir.
 
-Vize teslimindeki ana yöntem:
+Projenin ana amacı, aynı gözlem ve aksiyon sözleşmesi altında LNN/CfC tabanlı politikaları MLP, GRU ve LSTM gibi klasik ağlarla karşılaştırmaktır. Vize teslimindeki MVP kapsamında, bu hattı çalışır ve ölçülebilir hale getirmek için GRU tabanlı ilk yöntem raporlanmıştır.
+
+Vize teslimindeki mevcut deney hattı:
 
 - Robot çevreyi 32 ışınlı 2D LiDAR/range sensörü ile algılar.
 - Politika girdisi 38 boyutludur.
 - Politika çıktısı `[linear, angular]` aksiyonudur.
-- İlk temel yöntem GRU tabanlı politikadır.
+- İlk çalışan temel yöntem GRU tabanlı politikadır.
+- LNN/CfC karşılaştırması projenin ana hedefidir ve sonraki deney adımıdır.
 - Eğitimde Behavioral Cloning ve DAgger kullanılır.
 - A* yalnızca eğitimde öğretmen etiketi üretmek için kullanılır; değerlendirme sırasında kapalıdır.
 
@@ -160,5 +163,5 @@ report/                  LaTeX rapor, görseller, tablolar ve PDF çıktısı
 - Büyük checkpoint dosyaları GitHub'a eklenmez.
 - `results/` klasörü `.gitignore` ile dışarıda bırakılır.
 - Rapor için gerekli küçük PNG/GIF görselleri `report/figures` altında tutulur.
-- Mevcut MVP kapsamı GRU + BC/DAgger sonucudur.
-- MLP, LSTM ve CfC/LNN karşılaştırması sonraki çalışma olarak planlanmıştır.
+- Mevcut MVP, LNN/CfC çalışmasına zemin hazırlayan GRU + BC/DAgger sonucudur.
+- MLP, GRU, LSTM ve CfC/LNN karşılaştırması sonraki çalışma olarak planlanmıştır.
