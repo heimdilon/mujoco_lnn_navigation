@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MuJoCo Map Editor</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="mark"></div>
+          <div>
+            <h1>Map Editor</h1>
+            <p>MuJoCo navigation</p>
+          </div>
+        </div>
+
+        <section class="panel">
+          <label>Map name</label>
+          <input id="mapName" value="custom_map_01" />
+          <label>Base task</label>
+          <select id="baseTask"></select>
+          <label>Arena half size</label>
+          <input id="arenaHalf" type="number" min="1" max="8" step="0.1" value="3.5" />
+        </section>
+
+        <section class="tool-grid" aria-label="Tools">
+          <button class="tool active" data-tool="select" title="Select">Select</button>
+          <button class="tool" data-tool="start" title="Place start">Start</button>
+          <button class="tool" data-tool="goal" title="Place goal">Goal</button>
+          <button class="tool" data-tool="cylinder" title="Add cylinder">Circle</button>
+          <button class="tool" data-tool="box" title="Add box">Box</button>
+          <button class="tool" data-tool="wall" title="Draw wall">Wall</button>
+          <button id="deleteSelected" class="tool danger" title="Delete selected">Delete</button>
+        </section>
+
+        <section class="panel map-list">
+          <div class="row">
+            <label>Saved maps</label>
+            <button id="refreshMaps" class="icon-button" title="Refresh">↻</button>
+          </div>
+          <select id="mapList" size="6"></select>
+          <div class="row">
+            <button id="loadMap">Load</button>
+            <button id="deleteMap" class="danger-outline">Remove</button>
+          </div>
+        </section>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <div class="status-group">
+            <span id="status">Ready</span>
+            <span id="cursorReadout">x 0.00, y 0.00</span>
+          </div>
+          <div class="actions">
+            <button id="validateMap">Validate</button>
+            <button id="saveMap" class="primary">Save YAML</button>
+          </div>
+        </header>
+        <div class="canvas-wrap">
+          <canvas id="arena" width="920" height="920"></canvas>
+        </div>
+      </section>
+
+      <aside class="inspector">
+        <section class="panel">
+          <h2>Selection</h2>
+          <div id="selectionKind" class="selection-kind">None</div>
+          <div class="fields">
+            <label>X</label>
+            <input id="fieldX" type="number" step="0.05" />
+            <label>Y</label>
+            <input id="fieldY" type="number" step="0.05" />
+            <label id="fieldALabel">Radius</label>
+            <input id="fieldA" type="number" min="0.05" step="0.05" />
+            <label id="fieldBLabel">Yaw</label>
+            <input id="fieldB" type="number" step="0.05" />
+            <label id="fieldCLabel">Angle</label>
+            <input id="fieldC" type="number" step="0.05" />
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Jitter</h2>
+          <label class="checkline">
+            <input id="jitterEnabled" type="checkbox" />
+            Enable reset jitter
+          </label>
+          <label>Start std</label>
+          <input id="jitterStart" type="number" min="0" step="0.01" value="0" />
+          <label>Goal std</label>
+          <input id="jitterGoal" type="number" min="0" step="0.01" value="0" />
+          <label>Yaw std</label>
+          <input id="jitterYaw" type="number" min="0" step="0.01" value="0" />
+        </section>
+
+        <section class="panel metrics">
+          <h2>Map</h2>
+          <div><span>Obstacles</span><strong id="obstacleCount">0</strong></div>
+          <div><span>Start-goal</span><strong id="goalDistance">0.00 m</strong></div>
+          <div><span>File</span><strong id="filePath">not saved</strong></div>
+        </section>
+      </aside>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>

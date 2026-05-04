@@ -1,0 +1,484 @@
+name: custom_map_01
+seed: 11
+num_envs: 16
+physics_dt: 0.02
+frame_skip: 4
+arena:
+  half_size: 4.0
+robot:
+  radius: 0.18
+  max_linear_velocity: 0.8
+  max_angular_velocity: 2.2
+  wheel_base: 0.34
+episode:
+  max_steps: 180
+goal:
+  radius: 0.24
+  min_distance: 1.2
+  max_distance: 3.4
+sensors:
+  rays: 32
+  max_range: 4.0
+  noise_std: 0.0
+obstacles:
+  count:
+  - 61
+  - 61
+  radius:
+  - 0.12
+  - 0.28
+  box_probability: 0.25
+  min_clearance: 0.32
+reward:
+  progress_scale: 3.0
+  success_bonus: 10.0
+  collision_penalty: -8.0
+  timeout_penalty: -1.0
+  step_penalty: -0.012
+  near_obstacle_penalty: -0.04
+  action_smoothness_penalty: -0.02
+  heading_alignment_scale: 0.04
+map:
+  enabled: true
+  name: custom_map_01
+  base_task: open_clutter
+  start:
+  - -3.1094890510948905
+  - -3.162043884722856
+  - 0.0
+  goal:
+  - 3.2992700729927007
+  - 3.246715239364735
+  jitter:
+    enabled: false
+    start_std: 0.0
+    goal_std: 0.0
+    yaw_std: 0.0
+  obstacles:
+  - id: box_1777816463875
+    shape: box
+    x: -2.6715328467153285
+    y: -2.0671533737739507
+    half_x: 0.22
+    half_y: 0.22
+    radius: 0.22
+  - id: box_1777816464654
+    shape: box
+    x: -2.204379562043796
+    y: -2.0525548336279646
+    half_x: 0.22
+    half_y: 0.22
+    radius: 0.22
+  - id: box_1777816465183
+    shape: box
+    x: -1.7518248175182483
+    y: -2.03795629348198
+    half_x: 0.22
+    half_y: 0.22
+    radius: 0.22
+  - id: box_1777816465656
+    shape: box
+    x: -1.2992700729927007
+    y: -2.03795629348198
+    half_x: 0.22
+    half_y: 0.22
+    radius: 0.22
+  - id: box_1777816466622
+    shape: box
+    x: -0.832116788321168
+    y: -1.994160673044024
+    half_x: 0.22
+    half_y: 0.22
+    radius: 0.22
+  - id: box_1777816470460
+    shape: box
+    x: -0.394160583941606
+    y: -2.0525548336279646
+    half_x: 0.22
+    half_y: 0.22
+    radius: 0.22
+  - id: box_1777816470810
+    shape: box
+    x: 0.058394160583941535
+    y: -2.0671533737739507
+    half_x: 0.22
+    half_y: 0.22
+    radius: 0.22
+  - id: box_1777816471079
+    shape: box
+    x: 0.5109489051094886
+    y: -2.023357753335994
+    half_x: 0.22
+    half_y: 0.22
+    radius: 0.22
+  - id: box_1777816471319
+    shape: box
+    x: 1.0072992700729921
+    y: -2.008759213190009
+    half_x: 0.22
+    half_y: 0.22
+    radius: 0.22
+  - id: box_1777816471537
+    shape: box
+    x: 1.5036496350364965
+    y: -2.008759213190009
+    half_x: 0.22
+    half_y: 0.22
+    radius: 0.22
+  - id: box_1777816471739
+    shape: box
+    x: 2.0
+    y: -2.008759213190009
+    half_x: 0.22
+    half_y: 0.22
+    radius: 0.22
+  - id: box_1777816471904
+    shape: box
+    x: 2.54014598540146
+    y: -1.994160673044024
+    half_x: 0.22
+    half_y: 0.22
+    radius: 0.22
+  - id: box_1777816472091
+    shape: box
+    x: 3.0802919708029197
+    y: -2.008759213190009
+    half_x: 0.22
+    half_y: 0.22
+    radius: 0.22
+  - id: box_1777816472158
+    shape: box
+    x: -3.6934306569343067
+    y: -0.6948906000513233
+    half_x: 0.22
+    half_y: 0.22
+    radius: 0.22
+  - id: box_1777816472351
+    shape: box
+    x: 3.6350364963503647
+    y: -2.008759213190009
+    half_x: 0.22
+    half_y: 0.22
+    radius: 0.22
+  - id: box_1777816472502
+    shape: box
+    x: -3.167883211678832
+    y: -0.6948906000513233
+    half_x: 0.22
+    half_y: 0.22
+    radius: 0.22
+  - id: box_1777816472656
+    shape: box
+    x: -2.656934306569343
+    y: -0.6948906000513233
+    half_x: 0.22
+    half_y: 0.22
+    radius: 0.22
+  - id: box_1777816472819
+    shape: box
+    x: -2.18978102189781
+    y: -0.6948906000513233
+    half_x: 0.22
+    half_y: 0.22
+    radius: 0.22
+  - id: box_1777816472983
+    shape: box
+    x: -1.1386861313868613
+    y: -0.6948906000513233
+    half_x: 0.22
+    half_y: 0.22
+    radius: 0.22
+  - id: box_1777816473158
+    shape: box
+    x: -1.664233576642336
+    y: -0.6802920599053373
+    half_x: 0.22
+    half_y: 0.22
+    radius: 0.22
+  - id: box_1777816473609
+    shape: box
+    x: -0.6423357664233578
+    y: -0.709489140197308
+    half_x: 0.22
+    half_y: 0.22
+    radius: 0.22
+  - id: cylinder_1777816565855
+    shape: cylinder
+    x: -0.21897810218978098
+    y: -0.6510949796133665
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816567056
+    shape: cylinder
+    x: 0.1751824817518246
+    y: -0.6510949796133665
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816567638
+    shape: cylinder
+    x: 0.6715328467153281
+    y: -0.6656935197593521
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816568124
+    shape: cylinder
+    x: 1.0948905109489049
+    y: -0.709489140197308
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816568621
+    shape: cylinder
+    x: 1.562043795620438
+    y: -0.709489140197308
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816568982
+    shape: cylinder
+    x: 1.985401459854014
+    y: -0.709489140197308
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816569448
+    shape: cylinder
+    x: 2.54014598540146
+    y: -0.7240876803432941
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816570202
+    shape: cylinder
+    x: 2.9489051094890506
+    y: -0.709489140197308
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816572934
+    shape: cylinder
+    x: 3.8102189781021893
+    y: 0.779561954693202
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816573315
+    shape: cylinder
+    x: 3.343065693430657
+    y: 0.779561954693202
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816573675
+    shape: cylinder
+    x: 2.890510948905109
+    y: 0.779561954693202
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816574070
+    shape: cylinder
+    x: 2.437956204379562
+    y: 0.779561954693202
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816574411
+    shape: cylinder
+    x: 1.9562043795620427
+    y: 0.794160494839188
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816574742
+    shape: cylinder
+    x: 1.4744525547445253
+    y: 0.8233575751311593
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816575091
+    shape: cylinder
+    x: 0.9343065693430654
+    y: 0.8233575751311593
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816575529
+    shape: cylinder
+    x: 0.4963503649635035
+    y: 0.8379561152771444
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816576000
+    shape: cylinder
+    x: -0.05839416058394198
+    y: 0.8379561152771444
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816576392
+    shape: cylinder
+    x: -0.5547445255474455
+    y: 0.8525546554231287
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816576778
+    shape: cylinder
+    x: -0.9781021897810223
+    y: 0.8379561152771444
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816577140
+    shape: cylinder
+    x: -1.4598540145985401
+    y: 0.8379561152771444
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816577501
+    shape: cylinder
+    x: -1.883211678832117
+    y: 0.8817517357151008
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816577848
+    shape: cylinder
+    x: -2.335766423357664
+    y: 0.9109488160070711
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816578219
+    shape: cylinder
+    x: -2.6277372262773726
+    y: 0.8817517357151008
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816580024
+    shape: cylinder
+    x: -3.9416058394160585
+    y: 2.2686130495837133
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816580320
+    shape: cylinder
+    x: -3.3576642335766422
+    y: 2.2832115897296994
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816580771
+    shape: cylinder
+    x: -3.0802919708029197
+    y: 2.2978101298756846
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816581241
+    shape: cylinder
+    x: -2.875912408759124
+    y: 2.2978101298756846
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816581604
+    shape: cylinder
+    x: -2.4963503649635035
+    y: 2.2832115897296994
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816581959
+    shape: cylinder
+    x: -2.204379562043796
+    y: 2.239415969291742
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816582346
+    shape: cylinder
+    x: -1.6788321167883211
+    y: 2.2102188889997727
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816582746
+    shape: cylinder
+    x: -1.3138686131386863
+    y: 2.224817429145758
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816583078
+    shape: cylinder
+    x: -0.9343065693430659
+    y: 2.239415969291742
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816583424
+    shape: cylinder
+    x: -0.49635036496350393
+    y: 2.224817429145758
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816583772
+    shape: cylinder
+    x: 0.058394160583941535
+    y: 2.1956203488537867
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816584185
+    shape: cylinder
+    x: 0.3503649635036492
+    y: 2.1956203488537867
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816584671
+    shape: cylinder
+    x: 0.7299270072992705
+    y: 2.1810218087078006
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816585008
+    shape: cylinder
+    x: 1.1532846715328464
+    y: 2.1810218087078006
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816585333
+    shape: cylinder
+    x: 1.4014598540145986
+    y: 2.1664232685618154
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816585695
+    shape: cylinder
+    x: 1.7372262773722627
+    y: 2.1518247284158303
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1777816586120
+    shape: cylinder
+    x: 2.2481751824817513
+    y: 2.1518247284158303
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22

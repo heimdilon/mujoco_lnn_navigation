@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mujoco-lnn-navigation"
+version = "0.1.0"
+description = "Clean MuJoCo differential-drive navigation benchmark for CfC/LNN, MLP, GRU, and LSTM PPO policies."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "mujoco>=3.1",
+  "torch>=2.1",
+  "numpy>=1.24",
+  "pyyaml>=6.0",
+  "pillow>=10.0",
+  "tqdm>=4.66",
+  "pytest>=7.4",
+]
+
+[tool.setuptools.packages.find]
+where = ["source"]
+
+[tool.pytest.ini_options]
+pythonpath = ["source"]
+testpaths = ["tests"]
+

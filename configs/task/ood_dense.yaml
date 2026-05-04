@@ -1,0 +1,37 @@
+name: ood_dense
+seed: 23
+num_envs: 16
+physics_dt: 0.02
+frame_skip: 4
+arena:
+  half_size: 3.5
+robot:
+  radius: 0.18
+  max_linear_velocity: 0.8
+  max_angular_velocity: 2.2
+  wheel_base: 0.34
+episode:
+  max_steps: 220
+goal:
+  radius: 0.24
+  min_distance: 1.4
+  max_distance: 3.8
+sensors:
+  rays: 32
+  max_range: 4.0
+  noise_std: 0.035
+obstacles:
+  count: [20, 30]
+  radius: [0.12, 0.32]
+  box_probability: 0.35
+  min_clearance: 0.30
+reward:
+  progress_scale: 3.0
+  success_bonus: 10.0
+  collision_penalty: -8.0
+  timeout_penalty: -1.0
+  step_penalty: -0.012
+  near_obstacle_penalty: -0.04
+  action_smoothness_penalty: -0.02
+  heading_alignment_scale: 0.04
+

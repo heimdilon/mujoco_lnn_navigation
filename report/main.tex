@@ -1,0 +1,237 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{array}
+
+\geometry{margin=2.4cm}
+\graphicspath{{figures/}{report/figures/}}
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\placeholder}[1]{#1}
+
+\title{\textbf{MuJoCo Ortamında LiDAR Tabanlı Öğrenmeli Robot Navigasyonu}}
+\author{\placeholder{Ad Soyad -- Öğrenci No}}
+\date{6 Mayıs 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Bu çalışmada diferansiyel sürüşlü bir mobil robotun MuJoCo simülasyon ortamında
+engel içeren iki boyutlu haritalarda hedefe ulaşması incelenmiştir. Robotun çevre
+algısı kamera veya tam harita bilgisine dayanmamaktadır; bunun yerine 360 dereceye
+yayılan 32 ışınlı iki boyutlu LiDAR/range gözlemi kullanılmaktadır. Vize ödevi için
+ilk temel yöntem olarak GRU tabanlı bir politika, davranış klonlama ve DAgger
+yaklaşımıyla eğitilmiştir. A* planlayıcı yalnızca eğitim sırasında öğretmen etiketi
+üretmek için kullanılmış, değerlendirme aşamasında kapatılmıştır. İlk sonuçlarda iki
+manuel haritada da 4/4 başarı elde edilmiştir.
+\end{abstract}
+
+\section{Problem Tanımı}
+
+Amaç, bir mobil robotun başlangıç noktasından hedef noktaya engellere çarpmadan
+ulaşmasını sağlamaktır. Bu problem özellikle dar koridorlar, çizgi/duvar engeller ve
+yerel algı kısıtı nedeniyle klasik hedefe düz gitme kontrolünden daha zordur. Robot
+çevresini yalnızca yakın menzilli ışın ölçümleriyle gördüğü için karar verici modelin
+hem hedef yönünü hem de yakın engelleri birlikte yorumlaması gerekir.
+
+Bu vize aşamasında odaklanan konu şudur:
+\begin{quote}
+MuJoCo ortamında LiDAR tabanlı gözlem kullanan öğrenmeli navigasyon politikalarının
+kurulması ve ilk temel yöntem olarak GRU tabanlı politikanın denenmesi.
+\end{quote}
+
+\section{Genel Proje Planı}
+
+Projenin tamamı için planlanan çalışma akışı Tablo~\ref{tabplan} üzerinde
+özetlenmiştir. Bu teslimde ilk üç adım tamamlanmış ve ilk temel yöntem üzerinden
+sonuç alınmıştır.
+
+\begin{table}[h]
+\centering
+\caption{Proje planı}
+\label{tabplan}
+\begin{tabular}{|p{0.12\linewidth}|p{0.50\linewidth}|p{0.24\linewidth}|}
+\hline
+\textbf{Adım} & \textbf{İçerik} & \textbf{Durum} \\
+\hline
+1 & MuJoCo tabanlı diferansiyel sürüş ortamının kurulması & Tamamlandı \\
+\hline
+2 & Harita editörü, başlangıç/hedef noktaları ve çizgi engeller & Tamamlandı \\
+\hline
+3 & GRU + davranış klonlama + DAgger ile ilk temel yöntem & Tamamlandı \\
+\hline
+4 & MLP, LSTM ve CfC/LNN ile daha uzun ve adil karşılaştırma & Sonraki adım \\
+\hline
+5 & Daha fazla harita, sensör gürültüsü ve OOD testleri & Sonraki adım \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Ortam ve Sensör Modeli}
+
+Simülasyon ortamı \code{mujoco} Python API'si ile kurulmuştur. Robot basit bir
+diferansiyel sürüş gövdesi olarak modellenmiştir. Haritalar düz zemin üzerinde
+silindir, kutu ve çizgi/duvar engeller içerebilir. Eğitim ve değerlendirme headless
+çalıştırılmış, sonuçlar üstten görünüm PNG/GIF çıktılarıyla görselleştirilmiştir.
+
+Politika modeline verilen gözlem vektörü 38 boyutludur:
+
+\begin{center}
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Gözlem bileşeni} & \textbf{Boyut} \\
+\hline
+Hedef mesafesi & 1 \\
+Hedef açısı & 1 \\
+Doğrusal ve açısal hız & 2 \\
+Önceki aksiyon & 2 \\
+32 LiDAR/range ışını & 32 \\
+\hline
+\textbf{Toplam} & \textbf{38} \\
+\hline
+\end{tabular}
+\end{center}
+
+Aksiyon sözleşmesi iki boyutludur: \code{[linear, angular]}. Her iki değer de
+\code{[-1, 1]} aralığında normalize edilir ve ortam içinde robotun doğrusal/açısal
+hızına dönüştürülür.
+
+\section{İlk Temel Yöntem: GRU + BC/DAgger}
+
+İlk temel yöntem olarak GRU tabanlı bir politika seçilmiştir. GRU seçiminin nedeni,
+robotun yalnızca anlık LiDAR ölçümlerini görmesine rağmen dar koridorlarda geçmiş
+hareket bilgisinden faydalanabilmesidir.
+
+Eğitim iki aşamalıdır:
+\begin{enumerate}
+  \item \textbf{Davranış klonlama (BC):} A* tabanlı öğretmen rota üretir ve bu rota
+  üzerindeki gözlemlere karşılık gelen aksiyonlar taklit edilir.
+  \item \textbf{DAgger:} Model kendi politikasıyla çalıştırılır; modelin saptığı
+  durumlarda öğretmen yeniden etiket üretir ve politika bu yeni durumlarla
+  iyileştirilir.
+\end{enumerate}
+
+Önemli ayrım şudur: A* algoritması değerlendirme sırasında kullanılmamıştır.
+Değerlendirmede model yalnızca 38 boyutlu gözlemden doğrudan aksiyon üretmiştir.
+Bu nedenle sonuçlar canlı yol planlayıcı destekli bir kontrol değil, öğrenilmiş
+politika sonucudur.
+
+\begin{figure}[h]
+\centering
+\fbox{
+\begin{minipage}{0.92\linewidth}
+\centering
+\textbf{Yöntem akışı}\\[0.6em]
+MuJoCo haritası ve robot durumu\\
+$\Downarrow$\\
+32 ışınlı LiDAR + hedef mesafesi/açısı + hız + önceki aksiyon\\
+$\Downarrow$\\
+GRU politika modeli\\
+$\Downarrow$\\
+Normalize aksiyon: \code{[linear, angular]}\\
+$\Downarrow$\\
+MuJoCo adımı ve yeni robot durumu\\[0.6em]
+\textit{Eğitimde: A* öğretmen etiketi üretir. Eval'de: A* kapalıdır.}
+\end{minipage}
+}
+\caption{İlk temel yöntemin veri akışı}
+\label{figmethod}
+\end{figure}
+
+\section{Deney Kurulumu}
+
+Deneylerde iki manuel harita kullanılmıştır. Her haritada başlangıç ve hedef noktası
+sabitlenmiştir. Robotun amacı hedef yarıçapına girmek, engellere çarpmamak ve süre
+sınırını aşmamaktır.
+
+Kullanılan ana komut:
+
+\begin{verbatim}
+python scripts\batch_evaluate.py ^
+  --map-configs configs\maps\custom_map_01.yaml configs\maps\custom_map_02.yaml ^
+  --checkpoint results\custom_maps_gru_bc_dagger\latest.pt ^
+  --episodes 4 ^
+  --run-name batch_manual_maps_pure_gru_dagger ^
+  --max-steps 900 ^
+  --goal-observation-max 10
+\end{verbatim}
+
+Bu komutta \code{--auto-waypoints} kullanılmamıştır; dolayısıyla değerlendirme saf
+politika değerlendirmesidir.
+
+\section{İlk Sonuçlar}
+
+Tablo~\ref{tabresults} iki manuel haritada elde edilen ilk sonuçları göstermektedir.
+Her iki haritada da 4 bölümün tamamı başarıyla bitmiştir.
+
+\begin{table}[h]
+\centering
+\caption{GRU + BC/DAgger saf politika sonuçları}
+\label{tabresults}
+\begin{tabular}{|l|c|c|c|c|c|}
+\hline
+\textbf{Harita} & \textbf{Episode} & \textbf{Başarı} & \textbf{Çarpışma} & \textbf{Ortalama adım} & \textbf{Son mesafe (m)} \\
+\hline
+custom\_map\_01 & 4 & 1.00 & 0.00 & 459.0 & 0.202 \\
+\hline
+custom\_map\_02 & 4 & 1.00 & 0.00 & 521.0 & 0.190 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.86\linewidth]{custom_map_01_lidar.png}
+\caption{custom\_map\_01 üzerinde LiDAR ışınlarıyla birlikte saf politika rollout'u}
+\label{figmapone}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.86\linewidth]{custom_map_02_lidar.png}
+\caption{custom\_map\_02 üzerinde LiDAR ışınlarıyla birlikte saf politika rollout'u}
+\label{figmaptwo}
+\end{figure}
+
+\section{GitHub ve Kod Yapısı}
+
+Kod yapısı temiz bir Python paketi olarak düzenlenmiştir. Ana klasörler şunlardır:
+
+\begin{verbatim}
+source/mujoco_lnn_nav/   MuJoCo ortamı, modeller, değerlendirme yardımcıları
+configs/                 görev, eğitim ve manuel harita YAML dosyaları
+scripts/                 eğitim, değerlendirme, harita editörü ve karşılaştırma scriptleri
+tests/                   ortam sözleşmesi, ray sensörü ve PPO smoke testleri
+report/                  bu LaTeX raporu, görseller ve sonuç tabloları
+\end{verbatim}
+
+Büyük checkpoint dosyalarının GitHub'a eklenmemesi planlanmıştır. Bunun yerine
+kod, konfigürasyon dosyaları, küçük sonuç görselleri ve rapor dosyaları paylaşılır.
+Sonuçlar aynı komutlarla yeniden üretilebilir.
+
+\section{Sonraki Adımlar}
+
+Kısa bir ön karşılaştırmada MLP, CfC/LNN, GRU ve LSTM modelleri aynı hat üzerinden
+çalıştırılmıştır. Kısa eğitim süresinde yalnızca GRU kısmi başarı göstermiştir; bu
+nedenle nihai model karşılaştırması için daha uzun ve adil eğitim gereklidir.
+
+Sonraki aşamada planlananlar:
+\begin{itemize}
+  \item Daha fazla manuel harita ile eğitim/test ayrımı yapmak.
+  \item MLP, GRU, LSTM ve CfC/LNN politikalarını aynı DAgger bütçesiyle karşılaştırmak.
+  \item 16, 32 ve 64 LiDAR ışını ile sensör çözünürlüğü deneyleri yapmak.
+  \item Sensör gürültüsü ve daha yoğun engelli OOD haritalarda dayanıklılığı ölçmek.
+\end{itemize}
+
+\section{Sonuç}
+
+Bu vize aşamasında MuJoCo tabanlı öğrenmeli navigasyon ortamı kurulmuş, harita
+editörüyle iki manuel senaryo hazırlanmış ve ilk temel yöntem olarak GRU + BC/DAgger
+politikası uygulanmıştır. İlk sonuçlar, A* kapalı değerlendirmede iki haritada da
+başarılı navigasyon elde edildiğini göstermektedir. Bu yapı, ilerleyen aşamada model
+karşılaştırması ve daha zorlu harita testleri için temel oluşturur.
+
+\end{document}
