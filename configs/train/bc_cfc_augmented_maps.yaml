@@ -5,7 +5,7 @@ learning_rate: 0.0004
 episodes_per_map: 2
 max_steps: 900
 goal_observation_max: 10.0
-waypoint_resolution: 0.10
+waypoint_resolution: 0.18
 waypoint_radius: 0.30
 dense_waypoints: true
 batch_sequences: 2

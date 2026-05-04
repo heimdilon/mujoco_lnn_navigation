@@ -1,0 +1,7 @@
+run,policy,training_maps,dagger,seen_success,seen_total,holdout_success,holdout_total,notes
+cfc_custom8_train6_holdout2_seed25462877008,cfc,6_manual,yes,4,6,0,2,best_previous_cfc_baseline
+gru_custom8_train6_holdout2_seed25462877008,gru,6_manual,yes,3,6,0,2,previous_gru_baseline
+cfc_custom8_aug_v6,cfc,6_manual_plus_36_augmented,yes,0,6,0,2,dagger_rollouts_added_many_collision_sequences
+cfc_custom8_aug_v6_bc_only,cfc,6_manual_plus_36_augmented,no,0,6,0,2,bc_only_from_scratch_failed
+cfc_custom8_aug_v6_finetune_from_train6,cfc,6_manual_plus_36_augmented,no,1,6,0,2,low_lr_finetune_preserved_only_custom_map_05
+gru_custom8_aug_v6_bc_only,gru,6_manual_plus_36_augmented,no,0,6,1,2,learned_holdout_custom_map_08_but_failed_seen_originals
