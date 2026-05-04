@@ -42,6 +42,7 @@ def _checkpoint(path: Path, model: BaseActorCritic, optimizer: torch.optim.Optim
             "optimizer_state": optimizer.state_dict(),
             "step": step,
             "policy": policy,
+            "policy_impl": getattr(model, "policy_impl", policy),
             "hidden_size": int(cfg.get("hidden_size", 128)),
         },
         path,

@@ -10,7 +10,8 @@ Vize teslimindeki mevcut deney hattı:
 - Politika girdisi 38 boyutludur.
 - Politika çıktısı `[linear, angular]` aksiyonudur.
 - İlk çalışan temel yöntem GRU tabanlı politikadır.
-- LNN/CfC karşılaştırması projenin ana hedefidir ve sonraki deney adımıdır.
+- LNN/CfC politikası `ncps.torch.CfC` ile gerçek recurrent hidden-state kullanan bir modeldir.
+- LNN/CfC karşılaştırması projenin ana hedefidir.
 - Eğitimde Behavioral Cloning ve DAgger kullanılır.
 - A* yalnızca eğitimde öğretmen etiketi üretmek için kullanılır; değerlendirme sırasında kapalıdır.
 
@@ -52,7 +53,7 @@ python -m venv .venv
 Beklenen mevcut sonuç:
 
 ```text
-16 passed
+19 passed
 ```
 
 ## Vize Sonucunu Yeniden Üretme
@@ -139,6 +140,8 @@ Augmented split üzerinde CfC/LNN eğitimi için:
 ```powershell
 .\.venv\Scripts\python.exe scripts\train_bc.py --split-config configs\splits\custom8_seed25462877008_aug_v6.yaml --train-config configs\train\bc_cfc_augmented_maps.yaml --run-name cfc_custom8_aug_v6 --policy cfc --dagger-iterations 2 --dagger-rollouts-per-map 1 --dagger-epochs 30 --dagger-noise 0.05 --dagger-expert-mix 0.25 --device cpu --no-final-eval
 ```
+
+`cfc` ve `lnn` policy adları aynı gerçek `ncps.torch.CfC` modeline gider. Bu model önceki feed-forward prototip değildir; evaluation sırasında hidden state taşır ve BC eğitiminde `forward_sequence` ile tam sekans üzerinde optimize edilir.
 
 Sonrasında görülmemiş iki holdout haritasında saf policy değerlendirmesi:
 

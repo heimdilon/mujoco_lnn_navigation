@@ -14,7 +14,7 @@ sys.path.insert(0, str(ROOT / "source"))
 
 from mujoco_lnn_nav.config import load_task_config, load_train_config, load_yaml
 from mujoco_lnn_nav.envs.navigation import MujocoNavigationEnv
-from mujoco_lnn_nav.models.policies import RecurrentActorCritic, build_actor_critic
+from mujoco_lnn_nav.models.policies import build_actor_critic
 from mujoco_lnn_nav.utils.evaluation import evaluate_policy, write_eval_outputs
 from mujoco_lnn_nav.utils.planning import with_auto_waypoints
 from mujoco_lnn_nav.utils.rendering import render_rollout_gif, render_rollout_png
@@ -219,7 +219,7 @@ def collect_dagger_sequences(
 
 
 def sequence_loss(model, obs_seq: torch.Tensor, action_seq: torch.Tensor, train_cfg: dict) -> torch.Tensor:
-    if isinstance(model, RecurrentActorCritic):
+    if hasattr(model, "forward_sequence"):
         mean, _ = model.forward_sequence(obs_seq.unsqueeze(0))
         pred = torch.tanh(mean.squeeze(0))
     else:
@@ -270,6 +270,7 @@ def save_checkpoint(
             "optimizer_state": optimizer.state_dict(),
             "step": epoch,
             "policy": policy_name,
+            "policy_impl": getattr(model, "policy_impl", policy_name),
             "hidden_size": hidden_size,
             "training": "behavioral_cloning_from_astar_teacher",
             "eval_requires_astar": False,
