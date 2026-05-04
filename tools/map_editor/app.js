@@ -81,12 +81,9 @@ function defaultStartGoal() {
   };
 }
 
-function clearObstacles(confirmFirst = true) {
+function clearObstacles() {
   if (!state.obstacles.length) {
     setStatus("No obstacles to clear");
-    return;
-  }
-  if (confirmFirst && !window.confirm(`Clear ${state.obstacles.length} obstacles from the current map?`)) {
     return;
   }
   const removed = state.obstacles.length;
@@ -100,9 +97,6 @@ function clearObstacles(confirmFirst = true) {
 }
 
 function newBlankMap() {
-  if (state.obstacles.length && !window.confirm("Start a blank map and discard the current obstacles?")) {
-    return;
-  }
   state.arenaHalf = Number(els.arenaHalf.value || state.arenaHalf);
   state.baseTask = els.baseTask.value || state.baseTask;
   state.mapName = "custom_map_new";
@@ -600,7 +594,7 @@ document.getElementById("deleteSelected").addEventListener("click", () => {
     draw();
   }
 });
-document.getElementById("clearObstacles").addEventListener("click", () => clearObstacles(true));
+document.getElementById("clearObstacles").addEventListener("click", clearObstacles);
 document.getElementById("newMap").addEventListener("click", newBlankMap);
 
 [els.fieldX, els.fieldY, els.fieldA, els.fieldB, els.fieldC].forEach((input) => input.addEventListener("input", applyInspector));

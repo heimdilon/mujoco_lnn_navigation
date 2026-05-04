@@ -24,3 +24,13 @@ def test_map_editor_payload_builds_fixed_task_config():
     assert cfg["map"]["obstacles"][0]["shape"] == "box"
     assert cfg["map"]["obstacles"][0]["kind"] == "wall"
     assert cfg["map"]["obstacles"][0]["yaw"] == 0.75
+
+
+def test_map_editor_exposes_reset_controls():
+    html = __import__("pathlib").Path("tools/map_editor/index.html").read_text(encoding="utf-8")
+    app = __import__("pathlib").Path("tools/map_editor/app.js").read_text(encoding="utf-8")
+    assert 'id="clearObstacles"' in html
+    assert 'id="newMap"' in html
+    assert "/app.js?v=" in html
+    assert 'addEventListener("click", clearObstacles)' in app
+    assert 'addEventListener("click", newBlankMap)' in app

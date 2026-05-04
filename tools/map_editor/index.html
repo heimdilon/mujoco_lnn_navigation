@@ -34,8 +34,14 @@
           <button class="tool" data-tool="box" title="Add box">Box</button>
           <button class="tool" data-tool="wall" title="Draw wall">Wall</button>
           <button id="deleteSelected" class="tool danger" title="Delete selected">Delete</button>
-          <button id="clearObstacles" class="tool danger" title="Clear all obstacles">Clear all</button>
-          <button id="newMap" class="tool" title="Start a blank map">New map</button>
+        </section>
+
+        <section class="panel">
+          <h2>Map actions</h2>
+          <div class="row">
+            <button id="clearObstacles" class="danger-outline" title="Clear all obstacles">Clear all obstacles</button>
+            <button id="newMap" title="Start a blank map">New blank map</button>
+          </div>
         </section>
 
         <section class="panel map-list">
@@ -107,6 +113,6 @@
         </section>
       </aside>
     </main>
-    <script src="/app.js"></script>
+    <script src="/app.js?v=20260504-reset-controls"></script>
   </body>
 </html>
