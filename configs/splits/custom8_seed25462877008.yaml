@@ -1,0 +1,16 @@
+name: custom8_seed25462877008
+seed: 25462877008
+description: Eight manually drawn maps with two randomly held out for generalization tests.
+train_maps:
+  - configs/maps/custom_map_01.yaml
+  - configs/maps/custom_map_02.yaml
+  - configs/maps/custom_map_04.yaml
+  - configs/maps/custom_map_05.yaml
+  - configs/maps/custom_map_06.yaml
+  - configs/maps/custom_map_07.yaml
+holdout_maps:
+  - configs/maps/custom_map_03.yaml
+  - configs/maps/custom_map_08.yaml
+notes:
+  - Holdout maps are not used during BC/DAgger training.
+  - Pure policy evaluation must leave auto-waypoints disabled.
