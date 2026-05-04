@@ -7,3 +7,4 @@ cfc_custom8_aug_v6_finetune_from_train6,cfc,6_manual_plus_36_augmented,no,1,6,0,
 gru_custom8_aug_v6_bc_only,gru,6_manual_plus_36_augmented,no,0,6,1,2,learned_holdout_custom_map_08_but_failed_seen_originals
 cfc_ncps_custom8_aug_v6_bc_only_epoch120,ncps_cfc,6_manual_plus_36_augmented,no,1,6,0,2,real_ncps_cfc_cpu_run_timed_out_after_epoch120
 cfc_ncps_custom8_train6_bc_only,ncps_cfc,6_manual,no,1,6,0,2,real_ncps_cfc_bc_only_train6
+cfc_ncps_custom8_train6_dagger1_from_bc,ncps_cfc,6_manual,yes,0,6,0,2,short_real_ncps_cfc_dagger_continuation_worsened_policy
