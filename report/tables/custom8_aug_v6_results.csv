@@ -8,3 +8,10 @@ gru_custom8_aug_v6_bc_only,gru,6_manual_plus_36_augmented,no,0,6,1,2,learned_hol
 cfc_ncps_custom8_aug_v6_bc_only_epoch120,ncps_cfc,6_manual_plus_36_augmented,no,1,6,0,2,real_ncps_cfc_cpu_run_timed_out_after_epoch120
 cfc_ncps_custom8_train6_bc_only,ncps_cfc,6_manual,no,1,6,0,2,real_ncps_cfc_bc_only_train6
 cfc_ncps_custom8_train6_dagger1_from_bc,ncps_cfc,6_manual,yes,0,6,0,2,short_real_ncps_cfc_dagger_continuation_worsened_policy
+cfc_ncps_custom8_train6_cuda_bc,ncps_cfc,6_manual,no,0,6,0,2,cuda_unbatched_bc_220_failed
+cfc_ncps_custom8_train6_cuda_dagger1,ncps_cfc,6_manual,yes,1,6,0,2,cuda_unbatched_dagger1_recovered_only_custom_map_06
+cfc_ncps_custom8_train6_cuda_batched_bc,ncps_cfc,6_manual,no,0,6,0,2,cuda_batched_bc_220_failed
+cfc_ncps_custom8_train6_cuda_batched_dagger1,ncps_cfc,6_manual,yes,0,6,0,2,cuda_batched_dagger1_failed
+gru_custom8_train6_cuda_bc,gru,6_manual,no,1,6,0,2,cuda_bc_500_recovered_only_custom_map_07
+gru_custom8_train6_cuda_dagger2,gru,6_manual,yes,3,6,0,2,cuda_dagger2_matches_previous_best_seen_result
+gru_custom8_aug_v6_cuda_bc,gru,6_manual_plus_36_augmented,no,0,6,0,2,cuda_augmented_bc_failed_on_original_seen_and_holdout

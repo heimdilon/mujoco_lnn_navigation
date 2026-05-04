@@ -239,6 +239,56 @@ def sequence_loss(model, obs_seq: torch.Tensor, action_seq: torch.Tensor, train_
     return torch.mean(per_step * weights)
 
 
+def collate_sequence_batch(
+    obs_sequences: list[torch.Tensor],
+    action_sequences: list[torch.Tensor],
+    indices: list[int],
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    max_len = max(int(obs_sequences[idx].shape[0]) for idx in indices)
+    obs_dim = int(obs_sequences[indices[0]].shape[-1])
+    action_dim = int(action_sequences[indices[0]].shape[-1])
+    device = obs_sequences[indices[0]].device
+    obs_batch = torch.zeros((len(indices), max_len, obs_dim), dtype=torch.float32, device=device)
+    action_batch = torch.zeros((len(indices), max_len, action_dim), dtype=torch.float32, device=device)
+    valid = torch.zeros((len(indices), max_len), dtype=torch.float32, device=device)
+    for batch_idx, seq_idx in enumerate(indices):
+        seq_len = int(obs_sequences[seq_idx].shape[0])
+        obs_batch[batch_idx, :seq_len] = obs_sequences[seq_idx]
+        action_batch[batch_idx, :seq_len] = action_sequences[seq_idx]
+        valid[batch_idx, :seq_len] = 1.0
+    return obs_batch, action_batch, valid
+
+
+def sequence_batch_loss(
+    model,
+    obs_batch: torch.Tensor,
+    action_batch: torch.Tensor,
+    valid: torch.Tensor,
+    train_cfg: dict,
+) -> torch.Tensor:
+    if hasattr(model, "forward_sequence"):
+        mean, _ = model.forward_sequence(obs_batch)
+    else:
+        flat_obs = obs_batch.reshape(-1, obs_batch.shape[-1])
+        flat_mean, _ = model(flat_obs)
+        mean = flat_mean.reshape(obs_batch.shape[0], obs_batch.shape[1], -1)
+    pred = torch.tanh(mean)
+    per_step = (pred - action_batch).pow(2).mean(dim=-1)
+    weights = torch.ones_like(per_step)
+    early_steps = int(train_cfg.get("early_weight_steps", 100))
+    if early_steps > 0:
+        weights[:, : min(early_steps, weights.shape[1])] *= float(train_cfg.get("early_weight", 4.0))
+    near_ray = float(train_cfg.get("near_obstacle_ray", 0.22))
+    near_weight = float(train_cfg.get("near_obstacle_weight", 5.0))
+    if near_weight > 1.0:
+        min_ray = torch.min(obs_batch[:, :, 6:], dim=-1).values
+        weights = torch.where(min_ray < near_ray, weights * near_weight, weights)
+    valid_count = torch.clamp(valid.sum(), min=1.0)
+    mean_weight = torch.clamp((weights * valid).sum() / valid_count, min=1e-6)
+    weights = weights / mean_weight
+    return ((per_step * weights * valid).sum() / valid_count)
+
+
 def evaluate_maps(map_paths: list[str], train_cfg: dict, model, run_dir: Path, suffix: str, device: torch.device) -> dict[str, float]:
     metrics_out: dict[str, float] = {}
     for map_path in map_paths:
@@ -298,8 +348,15 @@ def train_epochs(
     for local_epoch in pbar:
         losses = []
         order = torch.randperm(len(obs_sequences)).tolist()
-        for idx in order:
-            loss = sequence_loss(model, obs_sequences[idx], action_sequences[idx], train_cfg)
+        batch_size = max(1, int(train_cfg.get("batch_sequences", 1)))
+        for start in range(0, len(order), batch_size):
+            batch_indices = order[start : start + batch_size]
+            if len(batch_indices) == 1:
+                idx = batch_indices[0]
+                loss = sequence_loss(model, obs_sequences[idx], action_sequences[idx], train_cfg)
+            else:
+                obs_batch, action_batch, valid = collate_sequence_batch(obs_sequences, action_sequences, batch_indices)
+                loss = sequence_batch_loss(model, obs_batch, action_batch, valid, train_cfg)
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -340,12 +397,14 @@ def main() -> None:
     hidden_size = int(train_cfg.get("hidden_size", 128))
     model = build_actor_critic(policy_name, 38, 2, hidden_size).to(device)
     optimizer_state = None
+    resume_epoch = 0
     if args.resume:
         checkpoint = torch.load(args.resume, map_location=device)
         if checkpoint.get("policy", policy_name) != policy_name:
             raise ValueError(f"Checkpoint policy {checkpoint.get('policy')} does not match config policy {policy_name}.")
         model.load_state_dict(checkpoint["model_state"])
         optimizer_state = checkpoint.get("optimizer_state")
+        resume_epoch = int(checkpoint.get("step", 0) or 0)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=float(train_cfg.get("learning_rate", 5e-4)))
     if optimizer_state is not None:
@@ -354,6 +413,7 @@ def main() -> None:
         except ValueError:
             pass
 
+    requested_epochs = int(train_cfg.get("epochs", 500))
     history = train_epochs(
         model,
         optimizer,
@@ -363,14 +423,14 @@ def main() -> None:
         run_dir,
         policy_name,
         hidden_size,
-        int(train_cfg.get("epochs", 500)),
-        0,
+        requested_epochs,
+        resume_epoch,
         args.save_interval,
         "bc",
     )
 
     dagger_metadata: list[dict] = []
-    total_epochs = int(train_cfg.get("epochs", 500))
+    total_epochs = resume_epoch + requested_epochs
     for iteration in range(args.dagger_iterations):
         new_obs, new_actions, new_meta = collect_dagger_sequences(
             map_configs,
