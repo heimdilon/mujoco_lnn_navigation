@@ -5,3 +5,5 @@ cfc_custom8_aug_v6,cfc,6_manual_plus_36_augmented,yes,0,6,0,2,dagger_rollouts_ad
 cfc_custom8_aug_v6_bc_only,cfc,6_manual_plus_36_augmented,no,0,6,0,2,bc_only_from_scratch_failed
 cfc_custom8_aug_v6_finetune_from_train6,cfc,6_manual_plus_36_augmented,no,1,6,0,2,low_lr_finetune_preserved_only_custom_map_05
 gru_custom8_aug_v6_bc_only,gru,6_manual_plus_36_augmented,no,0,6,1,2,learned_holdout_custom_map_08_but_failed_seen_originals
+cfc_ncps_custom8_aug_v6_bc_only_epoch120,ncps_cfc,6_manual_plus_36_augmented,no,1,6,0,2,real_ncps_cfc_cpu_run_timed_out_after_epoch120
+cfc_ncps_custom8_train6_bc_only,ncps_cfc,6_manual,no,1,6,0,2,real_ncps_cfc_bc_only_train6
