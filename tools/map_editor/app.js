@@ -73,6 +73,58 @@ function selectedObstacle() {
   return state.obstacles.find((item) => item.id === state.selected.id) || null;
 }
 
+function defaultStartGoal() {
+  const offset = state.arenaHalf * 0.58;
+  return {
+    start: { x: -offset, y: -offset, yaw: 0.0 },
+    goal: { x: offset, y: offset },
+  };
+}
+
+function clearObstacles(confirmFirst = true) {
+  if (!state.obstacles.length) {
+    setStatus("No obstacles to clear");
+    return;
+  }
+  if (confirmFirst && !window.confirm(`Clear ${state.obstacles.length} obstacles from the current map?`)) {
+    return;
+  }
+  const removed = state.obstacles.length;
+  state.obstacles = [];
+  state.selected = { kind: "none", id: null };
+  state.wallDraft = null;
+  state.dragging = false;
+  setStatus(`Cleared ${removed} obstacles`);
+  updateInspector();
+  draw();
+}
+
+function newBlankMap() {
+  if (state.obstacles.length && !window.confirm("Start a blank map and discard the current obstacles?")) {
+    return;
+  }
+  state.arenaHalf = Number(els.arenaHalf.value || state.arenaHalf);
+  state.baseTask = els.baseTask.value || state.baseTask;
+  state.mapName = "custom_map_new";
+  const defaults = defaultStartGoal();
+  state.start = defaults.start;
+  state.goal = defaults.goal;
+  state.obstacles = [];
+  state.selected = { kind: "start", id: null };
+  state.wallDraft = null;
+  state.dragging = false;
+  state.filePath = "not saved";
+  state.jitter = { enabled: false, start_std: 0, goal_std: 0, yaw_std: 0 };
+  els.mapName.value = state.mapName;
+  els.jitterEnabled.checked = false;
+  els.jitterStart.value = 0;
+  els.jitterGoal.value = 0;
+  els.jitterYaw.value = 0;
+  setStatus("Blank map ready");
+  updateInspector();
+  draw();
+}
+
 function localBoxPoint(obs, point) {
   const dx = point.x - obs.x;
   const dy = point.y - obs.y;
@@ -548,6 +600,8 @@ document.getElementById("deleteSelected").addEventListener("click", () => {
     draw();
   }
 });
+document.getElementById("clearObstacles").addEventListener("click", () => clearObstacles(true));
+document.getElementById("newMap").addEventListener("click", newBlankMap);
 
 [els.fieldX, els.fieldY, els.fieldA, els.fieldB, els.fieldC].forEach((input) => input.addEventListener("input", applyInspector));
 els.arenaHalf.addEventListener("input", () => {
