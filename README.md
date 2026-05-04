@@ -52,7 +52,7 @@ python -m venv .venv
 Beklenen mevcut sonuç:
 
 ```text
-11 passed
+16 passed
 ```
 
 ## Vize Sonucunu Yeniden Üretme
@@ -103,6 +103,27 @@ Desteklenen harita tipleri:
 
 Her harita üretilirken start/goal noktalarının serbest olduğu ve A* ile en az bir geçerli yol bulunduğu kontrol edilir. A* burada yalnızca harita kalite kontrolü içindir; saf policy değerlendirmesinde kullanılmamalıdır.
 
+## Manuel Harita Çoğaltma ve Holdout Testi
+
+Sekiz manuel haritalık deneyde iki harita eğitim dışında tutulur:
+
+- eğitim: `custom_map_01`, `custom_map_02`, `custom_map_04`, `custom_map_05`, `custom_map_06`, `custom_map_07`
+- holdout test: `custom_map_03`, `custom_map_08`
+
+Split kaydı:
+
+```text
+configs/splits/custom8_seed25462877008.yaml
+```
+
+Eğitim verisini artırmak için yalnızca eğitim haritalarından doğrulanmış varyasyonlar üretilebilir:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\augment_maps.py --split-config configs\splits\custom8_seed25462877008.yaml --variants-per-map 6 --out configs\maps\augmented\custom8_seed25462877008_aug_v6 --split-out configs\splits\custom8_seed25462877008_aug_v6.yaml --gallery results\map_gallery\custom8_seed25462877008_aug_v6.png
+```
+
+Bu komut 6 orijinal eğitim haritasını korur, her biri için 6 varyasyon üretir ve toplam 42 eğitim haritalık yeni split oluşturur. Holdout haritaları çoğaltılmaz ve eğitime eklenmez.
+
 ## Eğitim
 
 Kısa bir PPO smoke eğitimi:
@@ -112,6 +133,18 @@ Kısa bir PPO smoke eğitimi:
 ```
 
 Manuel haritalar üzerinde BC/DAgger hattı için ilgili eğitim konfigürasyonları `configs/train` altında bulunur.
+
+Augmented split üzerinde CfC/LNN eğitimi için:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\train_bc.py --split-config configs\splits\custom8_seed25462877008_aug_v6.yaml --train-config configs\train\bc_cfc_augmented_maps.yaml --run-name cfc_custom8_aug_v6 --policy cfc --dagger-iterations 2 --dagger-rollouts-per-map 1 --dagger-epochs 30 --dagger-noise 0.05 --dagger-expert-mix 0.25 --device cpu --no-final-eval
+```
+
+Sonrasında görülmemiş iki holdout haritasında saf policy değerlendirmesi:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\batch_evaluate.py --map-configs configs\maps\custom_map_03.yaml configs\maps\custom_map_08.yaml --checkpoint results\cfc_custom8_aug_v6\latest.pt --episodes 4 --run-name cfc_custom8_aug_v6_holdout_eval --max-steps 900 --goal-observation-max 10 --device cpu
+```
 
 ## Değerlendirme
 

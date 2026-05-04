@@ -1,0 +1,89 @@
+name: custom_map_05_aug_03
+seed: 25462907311
+num_envs: 16
+physics_dt: 0.02
+frame_skip: 4
+arena:
+  half_size: 4.0
+robot:
+  radius: 0.18
+  max_linear_velocity: 0.8
+  max_angular_velocity: 2.2
+  wheel_base: 0.34
+episode:
+  max_steps: 180
+goal:
+  radius: 0.24
+  min_distance: 1.2
+  max_distance: 3.4
+sensors:
+  rays: 32
+  max_range: 4.0
+  noise_std: 0.0
+obstacles:
+  count:
+  - 2
+  - 2
+  radius:
+  - 0.12
+  - 0.28
+  box_probability: 0.25
+  min_clearance: 0.32
+reward:
+  progress_scale: 3.0
+  success_bonus: 10.0
+  collision_penalty: -8.0
+  timeout_penalty: -1.0
+  step_penalty: -0.012
+  near_obstacle_penalty: -0.04
+  action_smoothness_penalty: -0.02
+  heading_alignment_scale: 0.04
+map:
+  enabled: true
+  name: custom_map_05_aug_03
+  base_task: open_clutter
+  start:
+  - -3.3659303188323975
+  - -2.9257681369781494
+  - -0.5312024819828531
+  goal:
+  - 3.2576920986175537
+  - 3.217358112335205
+  jitter:
+    enabled: false
+    start_std: 0.0
+    goal_std: 0.0
+    yaw_std: 0.0
+  obstacles:
+  - id: custom_map_05_aug_03_obs_000
+    shape: box
+    x: -2.06481955898425
+    y: -0.022766006879920378
+    half_x: 1.676291744723489
+    half_y: 0.0800530714748348
+    radius: 1.676291744723489
+    yaw: -0.0561901313679134
+    kind: wall
+  - id: custom_map_05_aug_03_obs_001
+    shape: box
+    x: 2.1575721752872363
+    y: -0.03330669002504073
+    half_x: 1.501265229653809
+    half_y: 0.07589680647463656
+    radius: 1.501265229653809
+    yaw: -0.021244459026017015
+    kind: wall
+  base_map: custom_map_05
+  augmented:
+    source: custom_map_05
+    seed: 25462907311
+    attempt: 0
+    validation_path_length: 9.1081
+    validation_waypoint_count: 3
+    start_goal_jitter: 0.22
+    yaw_jitter: 0.45
+    obstacle_jitter: 0.07
+    obstacle_scale_jitter: 0.04
+    obstacle_yaw_jitter: 0.05
+    max_attempts: 120
+    validation_resolution: 0.18

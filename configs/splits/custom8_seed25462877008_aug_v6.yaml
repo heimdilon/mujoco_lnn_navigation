@@ -1,0 +1,65 @@
+name: custom8_seed25462877008_aug_v6
+source_split: configs/splits/custom8_seed25462877008.yaml
+seed: 25462877008
+description: Augmented training split generated from manual maps; holdout maps are
+  copied unchanged.
+train_maps:
+- configs/maps/custom_map_01.yaml
+- configs/maps/custom_map_02.yaml
+- configs/maps/custom_map_04.yaml
+- configs/maps/custom_map_05.yaml
+- configs/maps/custom_map_06.yaml
+- configs/maps/custom_map_07.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_01_aug_00.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_01_aug_01.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_01_aug_02.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_01_aug_03.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_01_aug_04.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_01_aug_05.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_02_aug_00.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_02_aug_01.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_02_aug_02.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_02_aug_03.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_02_aug_04.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_02_aug_05.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_04_aug_00.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_04_aug_01.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_04_aug_02.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_04_aug_03.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_04_aug_04.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_04_aug_05.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_05_aug_00.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_05_aug_01.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_05_aug_02.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_05_aug_03.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_05_aug_04.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_05_aug_05.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_06_aug_00.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_06_aug_01.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_06_aug_02.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_06_aug_03.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_06_aug_04.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_06_aug_05.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_07_aug_00.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_07_aug_01.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_07_aug_02.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_07_aug_03.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_07_aug_04.yaml
+- configs/maps/augmented/custom8_seed25462877008_aug_v6/custom_map_07_aug_05.yaml
+holdout_maps:
+- configs/maps/custom_map_03.yaml
+- configs/maps/custom_map_08.yaml
+augmentation:
+  variants_per_map: 6
+  include_original_train_maps: true
+  start_goal_jitter: 0.22
+  yaw_jitter: 0.45
+  obstacle_jitter: 0.07
+  obstacle_scale_jitter: 0.04
+  obstacle_yaw_jitter: 0.05
+  max_attempts: 120
+  validation_resolution: 0.18
+notes:
+- Only train_maps from source_split are augmented.
+- Holdout maps are never augmented or used during training.
+- Pure policy evaluation must leave auto-waypoints disabled.

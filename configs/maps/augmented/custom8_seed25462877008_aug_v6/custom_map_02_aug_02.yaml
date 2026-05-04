@@ -1,0 +1,116 @@
+name: custom_map_02_aug_02
+seed: 25462887222
+num_envs: 16
+physics_dt: 0.02
+frame_skip: 4
+arena:
+  half_size: 4.0
+robot:
+  radius: 0.18
+  max_linear_velocity: 0.8
+  max_angular_velocity: 2.2
+  wheel_base: 0.34
+episode:
+  max_steps: 180
+goal:
+  radius: 0.24
+  min_distance: 1.2
+  max_distance: 3.4
+sensors:
+  rays: 32
+  max_range: 4.0
+  noise_std: 0.0
+obstacles:
+  count:
+  - 5
+  - 5
+  radius:
+  - 0.12
+  - 0.28
+  box_probability: 0.25
+  min_clearance: 0.32
+reward:
+  progress_scale: 3.0
+  success_bonus: 10.0
+  collision_penalty: -8.0
+  timeout_penalty: -1.0
+  step_penalty: -0.012
+  near_obstacle_penalty: -0.04
+  action_smoothness_penalty: -0.02
+  heading_alignment_scale: 0.04
+map:
+  enabled: true
+  name: custom_map_02_aug_02
+  base_task: open_clutter
+  start:
+  - -3.5821282863616943
+  - -3.461000442504883
+  - 0.1971418538474783
+  goal:
+  - 3.397556781768799
+  - 2.7291793823242188
+  jitter:
+    enabled: false
+    start_std: 0.0
+    goal_std: 0.0
+    yaw_std: 0.0
+  obstacles:
+  - id: custom_map_02_aug_02_obs_000
+    shape: box
+    x: -0.49140870103254963
+    y: -0.49140870103254963
+    half_x: 3.314319217030306
+    half_y: 0.08161861956802623
+    radius: 3.314319217030306
+    yaw: -0.05492382678444718
+    kind: wall
+  - id: custom_map_02_aug_02_obs_001
+    shape: box
+    x: 0.2639871461214942
+    y: -0.2639871461214942
+    half_x: 3.1743467077466248
+    half_y: 0.07305719147050256
+    radius: 3.1743467077466248
+    yaw: 3.074416106515166
+    kind: wall
+  - id: custom_map_02_aug_02_obs_002
+    shape: box
+    x: -0.22718993987035718
+    y: 0.06579215918905744
+    half_x: 3.3344923520816123
+    half_y: 0.07593902989354456
+    radius: 3.3344923520816123
+    yaw: 0.005170603734943491
+    kind: wall
+  - id: custom_map_02_aug_02_obs_003
+    shape: box
+    x: 2.0462645011600924
+    y: 1.9313721827373245
+    half_x: 1.7513333009476701
+    half_y: 0.08272050988585707
+    radius: 1.7513333009476701
+    yaw: 2.4178843049511984
+    kind: wall
+  - id: custom_map_02_aug_02_obs_004
+    shape: box
+    x: 0.09300905254719385
+    y: 2.4720233377223075
+    half_x: 1.352586607011464
+    half_y: 0.08533826511171176
+    radius: 1.352586607011464
+    yaw: -1.3929636622305055
+    kind: wall
+  base_map: custom_map_02
+  augmented:
+    source: custom_map_02
+    seed: 25462887210
+    attempt: 12
+    validation_path_length: 11.3286
+    validation_waypoint_count: 3
+    start_goal_jitter: 0.22
+    yaw_jitter: 0.45
+    obstacle_jitter: 0.07
+    obstacle_scale_jitter: 0.04
+    obstacle_yaw_jitter: 0.05
+    max_attempts: 120
+    validation_resolution: 0.18

@@ -12,7 +12,7 @@ from tqdm import tqdm
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "source"))
 
-from mujoco_lnn_nav.config import load_task_config, load_train_config
+from mujoco_lnn_nav.config import load_task_config, load_train_config, load_yaml
 from mujoco_lnn_nav.envs.navigation import MujocoNavigationEnv
 from mujoco_lnn_nav.models.policies import RecurrentActorCritic, build_actor_critic
 from mujoco_lnn_nav.utils.evaluation import evaluate_policy, write_eval_outputs
@@ -22,7 +22,9 @@ from mujoco_lnn_nav.utils.rendering import render_rollout_gif, render_rollout_pn
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--map-configs", nargs="+", required=True)
+    parser.add_argument("--map-configs", nargs="*", default=None)
+    parser.add_argument("--split-config", default=None, help="Optional split YAML; train_maps are used for training.")
+    parser.add_argument("--include-holdout-maps", action="store_true", help="Also train on holdout_maps from --split-config.")
     parser.add_argument("--train-config", required=True)
     parser.add_argument("--run-name", required=True)
     parser.add_argument("--resume", default=None)
@@ -39,6 +41,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--no-final-eval", action="store_true")
     parser.add_argument("--device", default="cpu")
     return parser.parse_args()
+
+
+def resolve_map_configs(args: argparse.Namespace) -> list[str]:
+    map_paths: list[str] = []
+    if args.split_config:
+        split_cfg = load_yaml(args.split_config)
+        map_paths.extend(str(path) for path in split_cfg.get("train_maps", []))
+        if args.include_holdout_maps:
+            map_paths.extend(str(path) for path in split_cfg.get("holdout_maps", []))
+    if args.map_configs:
+        map_paths.extend(str(path) for path in args.map_configs)
+    if not map_paths:
+        raise ValueError("Provide --map-configs or --split-config.")
+    return map_paths
 
 
 def teacher_action_to_goal(single, goal: np.ndarray) -> np.ndarray:
@@ -299,6 +315,7 @@ def train_epochs(
 
 def main() -> None:
     args = parse_args()
+    map_configs = resolve_map_configs(args)
     train_cfg = load_train_config(args.train_config)
     if args.policy is not None:
         train_cfg["policy"] = args.policy
@@ -312,7 +329,7 @@ def main() -> None:
     run_dir = ROOT / "results" / args.run_name
     run_dir.mkdir(parents=True, exist_ok=True)
 
-    obs_sequences, action_sequences, metadata = collect_sequences(args.map_configs, train_cfg, device)
+    obs_sequences, action_sequences, metadata = collect_sequences(map_configs, train_cfg, device)
     with (run_dir / "teacher_sequences.csv").open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=["map", "steps", "success", "collision", "timeout"])
         writer.writeheader()
@@ -355,7 +372,7 @@ def main() -> None:
     total_epochs = int(train_cfg.get("epochs", 500))
     for iteration in range(args.dagger_iterations):
         new_obs, new_actions, new_meta = collect_dagger_sequences(
-            args.map_configs,
+            map_configs,
             train_cfg,
             model,
             device,
@@ -398,7 +415,7 @@ def main() -> None:
             writer.writeheader()
             writer.writerows(dagger_metadata)
     if not args.no_final_eval:
-        print(evaluate_maps(args.map_configs, train_cfg, model, run_dir, "pure_eval", device))
+        print(evaluate_maps(map_configs, train_cfg, model, run_dir, "pure_eval", device))
 
 
 if __name__ == "__main__":

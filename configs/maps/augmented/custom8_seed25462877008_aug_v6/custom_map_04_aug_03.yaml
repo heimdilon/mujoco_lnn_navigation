@@ -1,0 +1,199 @@
+name: custom_map_04_aug_03
+seed: 25462897311
+num_envs: 16
+physics_dt: 0.02
+frame_skip: 4
+arena:
+  half_size: 4.0
+robot:
+  radius: 0.18
+  max_linear_velocity: 0.8
+  max_angular_velocity: 2.2
+  wheel_base: 0.34
+episode:
+  max_steps: 180
+goal:
+  radius: 0.24
+  min_distance: 1.2
+  max_distance: 3.4
+sensors:
+  rays: 32
+  max_range: 4.0
+  noise_std: 0.0
+obstacles:
+  count:
+  - 18
+  - 18
+  radius:
+  - 0.12
+  - 0.28
+  box_probability: 0.25
+  min_clearance: 0.32
+reward:
+  progress_scale: 3.0
+  success_bonus: 10.0
+  collision_penalty: -8.0
+  timeout_penalty: -1.0
+  step_penalty: -0.012
+  near_obstacle_penalty: -0.04
+  action_smoothness_penalty: -0.02
+  heading_alignment_scale: 0.04
+map:
+  enabled: true
+  name: custom_map_04_aug_03
+  base_task: open_clutter
+  start:
+  - -3.4596662521362305
+  - -3.379950523376465
+  - 0.9013148975679739
+  goal:
+  - 3.5377817153930664
+  - -3.735443592071533
+  jitter:
+    enabled: false
+    start_std: 0.0
+    goal_std: 0.0
+    yaw_std: 0.0
+  obstacles:
+  - id: custom_map_04_aug_03_obs_000
+    shape: box
+    x: 0.022555760105517603
+    y: -0.5288597561810886
+    half_x: 3.1222840805270766
+    half_y: 0.07778630252072304
+    radius: 3.1222840805270766
+    yaw: 1.5167321302218912
+    kind: wall
+  - id: custom_map_04_aug_03_obs_001
+    shape: cylinder
+    x: -2.545283093934752
+    y: 0.2651748626993939
+    radius: 0.22102647535040465
+    half_x: 0.22102647535040465
+    half_y: 0.22102647535040465
+  - id: custom_map_04_aug_03_obs_002
+    shape: cylinder
+    x: -1.3624938866876253
+    y: -0.20293802557143112
+    radius: 0.22854357241635154
+    half_x: 0.22854357241635154
+    half_y: 0.22854357241635154
+  - id: custom_map_04_aug_03_obs_003
+    shape: cylinder
+    x: -2.5662749589951437
+    y: -0.7435479879718427
+    radius: 0.20847587503148088
+    half_x: 0.20847587503148088
+    half_y: 0.20847587503148088
+  - id: custom_map_04_aug_03_obs_004
+    shape: cylinder
+    x: -1.4066611142815677
+    y: -1.5401881224205791
+    radius: 0.22214531453897973
+    half_x: 0.22214531453897973
+    half_y: 0.22214531453897973
+  - id: custom_map_04_aug_03_obs_005
+    shape: cylinder
+    x: -3.51382720725384
+    y: 2.0619792559266243
+    radius: 0.21338981098187404
+    half_x: 0.21338981098187404
+    half_y: 0.21338981098187404
+  - id: custom_map_04_aug_03_obs_006
+    shape: cylinder
+    x: -1.6509596832366906
+    y: 2.6166914078937342
+    radius: 0.2345599105856381
+    half_x: 0.2345599105856381
+    half_y: 0.2345599105856381
+  - id: custom_map_04_aug_03_obs_007
+    shape: cylinder
+    x: -1.3521749739082605
+    y: 1.470314509020267
+    radius: 0.21924348182465345
+    half_x: 0.21924348182465345
+    half_y: 0.21924348182465345
+  - id: custom_map_04_aug_03_obs_008
+    shape: cylinder
+    x: 0.9936365217747706
+    y: 1.5503908943595577
+    radius: 0.21216816471861413
+    half_x: 0.21216816471861413
+    half_y: 0.21216816471861413
+  - id: custom_map_04_aug_03_obs_009
+    shape: cylinder
+    x: 2.377568295563811
+    y: 2.381570988152984
+    radius: 0.20451453626033664
+    half_x: 0.20451453626033664
+    half_y: 0.20451453626033664
+  - id: custom_map_04_aug_03_obs_010
+    shape: cylinder
+    x: 3.52
+    y: 1.91027067323312
+    radius: 0.22446454147577707
+    half_x: 0.22446454147577707
+    half_y: 0.22446454147577707
+  - id: custom_map_04_aug_03_obs_011
+    shape: cylinder
+    x: 1.8208098595394313
+    y: 0.3923390137437428
+    radius: 0.2079662758745449
+    half_x: 0.2079662758745449
+    half_y: 0.2079662758745449
+  - id: custom_map_04_aug_03_obs_012
+    shape: cylinder
+    x: 0.3133308115420357
+    y: -0.0978229436176605
+    radius: 0.21507029665890662
+    half_x: 0.21507029665890662
+    half_y: 0.21507029665890662
+  - id: custom_map_04_aug_03_obs_013
+    shape: cylinder
+    x: 1.7463532822669074
+    y: -0.36691591403488305
+    radius: 0.22486842948906463
+    half_x: 0.22486842948906463
+    half_y: 0.22486842948906463
+  - id: custom_map_04_aug_03_obs_014
+    shape: cylinder
+    x: 2.810129781269335
+    y: 0.5371085306760994
+    radius: 0.2201656583975944
+    half_x: 0.2201656583975944
+    half_y: 0.2201656583975944
+  - id: custom_map_04_aug_03_obs_015
+    shape: cylinder
+    x: 3.3302775977858703
+    y: -1.0605248117816397
+    radius: 0.22261620825199321
+    half_x: 0.22261620825199321
+    half_y: 0.22261620825199321
+  - id: custom_map_04_aug_03_obs_016
+    shape: cylinder
+    x: 1.0121911964887762
+    y: -2.4515768642845535
+    radius: 0.21950720190432582
+    half_x: 0.21950720190432582
+    half_y: 0.21950720190432582
+  - id: custom_map_04_aug_03_obs_017
+    shape: cylinder
+    x: 1.932626756380691
+    y: -1.5775356548822834
+    radius: 0.21358668453603596
+    half_x: 0.21358668453603596
+    half_y: 0.21358668453603596
+  base_map: custom_map_04
+  augmented:
+    source: custom_map_04
+    seed: 25462897311
+    attempt: 0
+    validation_path_length: 16.2372
+    validation_waypoint_count: 5
+    start_goal_jitter: 0.22
+    yaw_jitter: 0.45
+    obstacle_jitter: 0.07
+    obstacle_scale_jitter: 0.04
+    obstacle_yaw_jitter: 0.05
+    max_attempts: 120
+    validation_resolution: 0.18
