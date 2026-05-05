@@ -13,18 +13,18 @@
 \setlist[itemize]{itemsep=0.2em,topsep=0.3em}
 \setlist[enumerate]{itemsep=0.2em,topsep=0.3em}
 \usepackage{graphicx}
+\usepackage{subcaption}
 \usepackage{amsmath}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric,arrows.meta,positioning}
 \usepackage[colorlinks=true,linkcolor=black,urlcolor=blue,citecolor=black]{hyperref}
 \usepackage{titlesec}
 \titleformat{\section}{\normalfont\large\bfseries}{\thesection}{1em}{}
 \titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{1em}{}
 
 \addto\captionsturkish{\renewcommand{\abstractname}{Özet}}
-
 \newcommand{\code}[1]{\texttt{#1}}
-
 \graphicspath{{figures/}{report/figures/}}
-
 \hyphenation{na-vi-gas-yon en-ge-li da-vra-nış klo-nla-ma po-li-ti-ka}
 
 \title{\textbf{MuJoCo Ortamında LNN/CfC Odaklı\\Öğrenmeli Robot Navigasyonu}}
@@ -41,28 +41,80 @@
 Bu çalışmada diferansiyel sürüşlü bir mobil robotun MuJoCo simülasyon
 ortamında 32 ışınlı LiDAR gözlemi kullanarak engel içeren haritalarda
 hedefe ulaşması incelenmiştir.
-Projenin temel hedefi, Liquid Neural Network / CfC tabanlı politikayı
-GRU ve LSTM gibi klasik yinelemeli ağlarla aynı koşullar altında
-karşılaştırmaktır.
-Vize aşamasında GRU + Davranış Klonlama (BC) + DAgger ile iki haritada
-4/4 başarı elde edilmiştir.
-Final aşamasında CfC politikasının neden başarısız olduğu sistematik
-biçimde araştırılmış; üç mimari ve yapılandırma hatası tespit edilerek
-düzeltilmiştir.
-Düzeltilmiş CfC modeli, sekiz haritalık deney setinde 6 haritanın 2'sinde
-tam başarı, kalan 4 haritasında ise çarpışmasız navigasyon elde etmiştir.
+Projenin odak noktası, Liquid Neural Network / Closed-form Continuous-time
+(LNN/CfC) tabanlı politikayı GRU ve LSTM gibi klasik yinelemeli ağlarla
+aynı koşullar altında karşılaştırmaktır.
+Proje üç temel adımda yürütülmüştür: (1) MuJoCo tabanlı navigasyon
+ortamının ve sensör sözleşmesinin kurulması, (2) GRU ile referans baseline
+oluşturulması ve (3) CfC politikasının neden başarısız olduğunun araştırılıp
+düzeltilmesi.
+Referans yöntem olan GRU, Davranış Klonlama (BC) ve DAgger ile eğitilerek
+iki manuel haritada 4/4 başarı elde etmiştir.
+CfC politikasında tespit edilen üç mimari ve yapılandırma hatası giderildikten
+ve iki DAgger iterasyonu uygulandıktan sonra CfC, altı haritalık test setinde
+2 haritada tam başarı, kalan 4 haritada çarpışmasız navigasyon sağlamıştır.
+
+\vspace{0.5em}
+\noindent\textbf{Anahtar sözcükler:}
+mobil robot navigasyonu, MuJoCo, LiDAR, LNN, CfC, GRU,
+davranış klonlama, DAgger.
 \end{abstract}
 
 % =====================================================================
-\section{Problem Tanımı}
+\section{Konu ve Planlama}
 
-Amaç, bir mobil robotun başlangıç noktasından hedef noktaya engellere
-çarpmadan ulaşmasını sağlamaktır.
-Robot çevresini yalnızca kısa menzilli ışın ölçümleriyle (LiDAR) algıladığı
-için karar vericinin hem hedef yönünü hem de yakın engelleri birlikte
-yorumlaması gerekir.
+\subsection{Odak Konu}
 
-Politika modeline verilen gözlem vektörü 38 boyutludur:
+Bu projede araştırılan soru şudur: \emph{Sürekli zamanlı yinelemeli ağ
+mimarileri (LNN/CfC), kısa menzilli LiDAR gözlemiyle engel içeren
+bir ortamda navigasyon öğrenmede GRU'ya kıyasla nasıl bir başarım gösterir?}
+
+Konu motivasyonu üç gözleme dayanmaktadır:
+\begin{itemize}
+  \item CfC, sabit zaman adımına bağımlı olmayan sürekli zamanlı ODE
+  dinamiğiyle çalışır; bu özellik değişken kontrol frekanslarında avantaj
+  sağlayabilir.
+  \item Navigasyon görevi kısmi gözlem altında ardışık karar verme gerektirir;
+  yinelemeli ağların gizli durumu bu geçmiş bilgiyi taşır.
+  \item CfC uygulamalarında rapor edilen başarımı doğrulamak için robotik
+  navigasyon gibi gerçek bir kontrol görevinde bağımsız değerlendirme
+  yapılmamıştır.
+\end{itemize}
+
+\subsection{Proje Planı}
+
+Tablo~\ref{tab:plan} tüm proje adımlarını ve güncel durumlarını özetlemektedir.
+
+\begin{table}[h]
+\centering
+\caption{Proje planı ve adım durumları}
+\label{tab:plan}
+\begin{tabular}{clp{6.8cm}l}
+\toprule
+\textbf{\#} & \textbf{Adım} & \textbf{İçerik} & \textbf{Durum} \\
+\midrule
+1 & Ortam & MuJoCo diferansiyel sürüş ortamı, harita editörü,
+           LiDAR sensör modeli & Tamamlandı \\
+2 & Baseline & GRU + BC/DAgger ile referans politika,
+              iki haritada saf politika değerlendirmesi & Tamamlandı \\
+3 & CfC analizi & CfC başarısızlığının kök neden analizi
+                 ve mimari düzeltme & Tamamlandı \\
+4 & Karşılaştırma & 6 haritalık test setinde GRU, CfC, LSTM, MLP
+                   adil karşılaştırması & Tamamlandı \\
+5 & OOD testleri & Sensör gürültüsü ve görülmemiş (holdout)
+                  haritalarda dayanıklılık değerlendirmesi & Sonraki adım \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% =====================================================================
+\section{Ortam ve Sensör Modeli}
+
+Simülasyon ortamı \code{mujoco} Python API'siyle kurulmuştur.
+Robot; zemin üzerindeki silindir, kutu ve çizgi/duvar engel kombinasyonlarını
+içeren haritalarda hareket eder.
+Tüm eğitim ve değerlendirme headless modda çalışmış, sonuçlar üstten görünüm
+PNG/GIF çıktılarıyla görselleştirilmiştir.
 
 \begin{center}
 \begin{tabular}{lc}
@@ -80,61 +132,78 @@ Doğrusal ve açısal hız & 2 \\
 \end{tabular}
 \end{center}
 
-Aksiyon uzayı iki boyutludur: \code{[linear, angular]}, her değer
-\code{[-1, 1]} aralığında normalize edilir.
+Aksiyon: \code{[linear, angular]} $\in [-1, 1]^2$. \\
+Fizik adımı: \code{physics\_dt} $= 0.02\,\text{s}$, \code{frame\_skip} $= 4$,
+kontrol döngüsü $\Delta t = 0.08\,\text{s}$.
 
 % =====================================================================
-\section{Yöntem}
+\section{Temel Yöntem: GRU + BC/DAgger}
 
 \subsection{Eğitim Hattı}
 
-Eğitim iki aşamalıdır:
+Şekil~\ref{fig:pipeline} eğitim hattını özetlemektedir.
 
-\begin{enumerate}
-  \item \textbf{Davranış Klonlama (BC):} A* tabanlı öğretmen planlayıcı her
-  haritada referans yollar oluşturur.
-  Model, bu yollar boyunca toplanan \(\langle\text{gözlem, aksiyon}\rangle\)
-  çiftlerini taklit etmek üzere eğitilir.
-  Kayıp fonksiyonu ağırlıklı MSE'dir; engel yakınındaki adımlara ve
-  yolun başına daha yüksek ağırlık verilir.
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+  box/.style={rectangle,draw,rounded corners=3pt,minimum width=2.8cm,
+              minimum height=0.9cm,align=center,font=\small,fill=blue!7},
+  teach/.style={rectangle,draw,rounded corners=3pt,minimum width=2.8cm,
+                minimum height=0.9cm,align=center,font=\small,fill=orange!15},
+  arr/.style={-{Stealth[length=2.5mm]},thick},
+  node distance=0.55cm and 1.1cm
+]
+\node[box] (map)   {MuJoCo\\haritası};
+\node[teach,right=of map] (astar) {A* öğretmen\\planlayıcı};
+\node[box,right=of astar] (demo)  {Gözlem--\\aksiyon çifti};
+\node[box,right=of demo]  (bc)    {BC eğitimi\\(MSE kayıp)};
+\node[box,below=0.9cm of bc] (dag)   {DAgger\\iterasyonu};
+\node[box,left=of dag]   (roll)  {Politika\\rollout'u};
+\node[teach,left=of roll]  (label) {Öğretmen\\yeniden etiket};
+\draw[arr] (map) -- (astar);
+\draw[arr] (astar) -- (demo);
+\draw[arr] (demo) -- (bc);
+\draw[arr] (bc) -- (dag);
+\draw[arr] (dag) -- (roll);
+\draw[arr] (roll) -- (label);
+\draw[arr] (label.north) -- ++(0,0.4) -| (demo.south);
+\node[font=\footnotesize,gray] at (4.5,-1.9) {A* yalnızca eğitimde; eval'de kapalı};
+\end{tikzpicture}
+\caption{Eğitim hattı: BC ve DAgger aşamaları}
+\label{fig:pipeline}
+\end{figure}
 
-  \item \textbf{DAgger:} Mevcut politika kendi kararlarıyla ortamı dolaşır;
-  öğretmen bu durumlara da yeni etiket üretir.
-  Toplanan veriler BC verisiyle birleştirilerek model yeniden eğitilir.
-  Bu sayede modelin kendi hatalarından doğan durumlara maruz kalması sağlanır.
-\end{enumerate}
+\textbf{Davranış Klonlama (BC):}
+A* tabanlı öğretmen her haritada referans yollar üretir.
+Model, bu yollar boyunca toplanan $\langle$gözlem, aksiyon$\rangle$ çiftlerini
+taklit etmek üzere eğitilir.
+Kayıp fonksiyonu ağırlıklı MSE'dir; engel yakınındaki adımlara ve yolun
+başına daha yüksek ağırlık verilir.
 
-Önemli bir nokta: A* planlayıcı yalnızca eğitim sırasında kullanılır.
-Değerlendirmede model yalnızca 38 boyutlu gözlem vektöründen doğrudan aksiyon
-üretir; hiçbir yol planlayıcı çalışmaz.
+\textbf{DAgger:}
+Mevcut politika kendi kararlarıyla ortamı dolaşır; öğretmen bu durumlara da
+yeni etiket üretir ve politika yeni durumlarla iyileştirilir.
+Bu yineleme, BC'nin dağılım kayması sorununu azaltır.
 
-\subsection{Politika Mimarileri}
+\subsection{GRU Mimarisi}
 
-Karşılaştırılan mimariler aynı gözlem ve aksiyon sözleşmesini paylaşır:
-
-\begin{itemize}
-  \item \textbf{GRU:} Standart kapılı yinelemeli ağ.
-  Gözlem önce \code{Linear(38, 128) + Tanh} katmanıyla kodlanır, ardından
-  128 birimlik GRU hücresinden geçer.
-  \item \textbf{CfC (Closed-form Continuous-time):} \code{ncps.torch.CfC}
-  kütüphanesi ile uygulanan sürekli zamanlı yinelemeli ağ.
-  Vize sonrası yapılan analiz neticesinde eklenen \code{Linear(38, 128) + Tanh}
-  giriş kodlayıcısı ile birlikte kullanılır.
-  ODE çözücüsüne gerçek kontrol zaman adımı \(\Delta t = 0.08\,\text{s}\)
-  geçirilir.
-\end{itemize}
+Gizli durum boyutu 128, giriş kodlayıcısı \code{Linear(38,128)+Tanh},
+ardından 128 birimlik GRU hücresi, çıkışta \code{Linear(128,2)} aksiyon
+başlığı ve \code{Linear(128,1)} değer başlığı bulunmaktadır.
+Eğitimde politika Adam optimize edici ($\text{lr}=5\!\times\!10^{-4}$)
+ve gradyen kırpması (norm $\leq 1.0$) ile güncellenmiştir.
 
 % =====================================================================
-\section{Vize Aşaması: GRU Baseline}
+\section{Sonuçlar: GRU Baseline}
 
-Vize tesliminde iki manuel haritada GRU politikası BC + DAgger ile
-eğitilmiştir.
-4 bölümlük değerlendirmede her iki haritada da tam başarı elde edilmiştir
-(Tablo~\ref{tab:vize}).
+\subsection{Vize Değerlendirmesi — 2 Manuel Harita}
+
+Tablo~\ref{tab:vize} vize aşamasında elde edilen sonuçları göstermektedir.
+Değerlendirme A* kapalı, saf politika modundadır.
 
 \begin{table}[h]
 \centering
-\caption{Vize baseline: GRU + BC/DAgger sonuçları (2 manuel harita, 4 bölüm)}
+\caption{GRU + BC/DAgger baseline — 2 harita, 4 bölüm, max-steps = 900}
 \label{tab:vize}
 \begin{tabular}{lcccc}
 \toprule
@@ -146,157 +215,152 @@ eğitilmiştir.
 \end{tabular}
 \end{table}
 
+Her iki haritada da 4 bölümün tamamı başarıyla tamamlanmıştır.
+
+\subsection{Rollout Görselleri}
+
+Şekil~\ref{fig:rollouts} her iki haritadaki başarılı rollout yollarını
+LiDAR ışınlarıyla birlikte göstermektedir.
+Engeller turuncu/kırmızı kutular ve silindirlerle, robot yolu mavi çizgiyle,
+hedef yeşil daire ile belirtilmiştir.
+
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.80\linewidth]{custom_map_01_lidar.png}
-\caption{GRU politikasının \code{custom\_map\_01} üzerindeki yolu
-(LiDAR ışınları ve engeller görünür)}
-\label{fig:map01}
+\begin{subfigure}[b]{0.47\linewidth}
+  \includegraphics[width=\linewidth]{custom_map_01_lidar.png}
+  \caption{\code{custom\_map\_01} — dar koridor, 459 adım}
+  \label{fig:map01}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.47\linewidth}
+  \includegraphics[width=\linewidth]{custom_map_02_lidar.png}
+  \caption{\code{custom\_map\_02} — L şekilli geçit, 521 adım}
+  \label{fig:map02}
+\end{subfigure}
+\caption{GRU politikasının iki manuel haritadaki başarılı rollout yolları}
+\label{fig:rollouts}
 \end{figure}
 
 % =====================================================================
-\section{Final Aşaması: CfC Başarısızlık Analizi ve Düzeltme}
+\section{CfC Politikası: Başarısızlık Analizi ve Düzeltme}
 
 \subsection{Başarısızlık Gözlemi}
 
-Vize sonrasında CfC politikası aynı eğitim hattına eklenerek test edilmiştir.
-Sonuç: sekiz haritalık test setinde tüm bölümlerde çarpışma, sıfır başarı.
-Eğitim kaybı ise çok düşük değerlere (\(\approx 0.001\)) ulaşmıştı.
-Bu tablo --- düşük kayıp, sıfır başarı --- dağılım kaymasının klasik
-belirtisidir: model uzman durumlarını ezberlemiş, ancak kendi hata
-durumlarında hızla sapıyor.
+CfC politikası aynı eğitim hattına eklendiğinde sekiz haritalık test setinde
+tüm bölümlerde çarpışma ve sıfır başarı üretmiştir.
+Eğitim kaybı ise $\approx 0.001$ gibi düşük değerlere ulaşmıştı.
+Düşük kayıp + sıfır başarı: uzman durum dağılımında iyi taklit, ancak
+kendi hata durumlarında hızla sapma (dağılım kayması).
 
 \subsection{Tespit Edilen Kök Nedenler}
 
-Kod ve yapılandırma dosyaları incelenerek üç ayrı sorun tespit edilmiştir:
-
 \begin{enumerate}
+\item \textbf{Giriş kodlayıcısı eksikliği (en kritik).}
+GRU mimarisinde ham gözlem önce \code{Linear(38,128)+Tanh} ile ortak
+gizli alana yansıtılır.
+CfC ise 38 boyutlu ham gözlemi (LiDAR $\in [0,1]$, hız $\approx\pm5$,
+açı $\in [-\pi,\pi]$) doğrudan ODE hücresine veriyordu;
+bu ölçek farkı öğrenmeyi zorlaştırmaktaydı.
 
-  \item \textbf{Giriş kodlayıcısı eksikliği (en kritik).}
-  GRU mimarisinde ham gözlem önce \code{Linear(38, 128) + Tanh} katmanıyla
-  ortak bir gizli alana yansıtılır.
-  CfC ise ham 38 boyutlu gözlemi (LiDAR 0--1, hız \(\pm5\), açı \(\pm\pi\))
-  doğrudan ODE hücresine veriyordu.
-  Farklı ölçeklerdeki bu girişler CfC içinde öğrenmeyi zorlaştırmakta,
-  GRU'ya karşı yapısal dezavantaj yaratmaktaydı.
+\item \textbf{Asimetrik eğitim bütçesi.}
+GRU: 500 dönem, harita başına 4 bölüm (24 demo).
+CfC: 220 dönem, harita başına 2 bölüm (12 demo).
+CfC, GRU'nun yarısı kadar veriyle eğitiliyordu.
 
-  \item \textbf{Eğitim bütçesi asimetrisi.}
-  GRU konfigürasyonu: 500 dönem, harita başına 4 bölüm (24 demo).
-  CfC konfigürasyonu: 220 dönem, harita başına 2 bölüm (12 demo).
-  CfC, GRU'nun yarısı kadar veri ve yaklaşık yarısı kadar gradyen adımıyla
-  eğitiliyordu.
-
-  \item \textbf{ODE zaman adımı hatası.}
-  \code{ncps.torch.CfC} için \(\Delta t = 1.0\,\text{s}\) varsayılanı
-  kullanılıyordu.
-  Gerçek kontrol döngüsü ise \(\text{physics\_dt} \times \text{frame\_skip}
-  = 0.02 \times 4 = 0.08\,\text{s}\).
-  ODE çözücüsü her adımda yaklaşık 12.5 kat fazla zaman ilerletiyordu;
-  bu durum özellikle 900 adımlık uzun bölümlerde gizli durumu kararsız
-  hale getiriyordu.
-
+\item \textbf{ODE zaman adımı hatası.}
+\code{ncps.torch.CfC} varsayılanı $\Delta t = 1.0\,\text{s}$'dir;
+gerçek kontrol adımı ise $0.08\,\text{s}$.
+ODE çözücüsü her adımda $12.5\times$ fazla zaman ilerletiyordu.
 \end{enumerate}
 
 \subsection{Uygulanan Düzeltmeler}
 
-Üç sorun ayrı ayrı giderilmiştir:
-
 \begin{enumerate}
-  \item \code{CfCActorCritic} sınıfına GRU ile özdeş bir giriş kodlayıcısı
-  eklendi: \code{self.input = nn.Sequential(Linear(38, 128), Tanh())}.
-  CfC hücresinin giriş boyutu 38'den 128'e güncellendi.
-
-  \item CfC konfigürasyon dosyası GRU ile eşitleştirildi:
-  500 dönem, harita başına 4 bölüm, yığın büyüklüğü 2.
-
-  \item Tüm CfC ileri geçişlerine gerçek kontrol zaman adımı iletildi.
-  \code{ncps} kütüphanesinin yığın boyutu kısıtı nedeniyle
-  \(\Delta t\) tensörü \((1, T)\) boyutunda oluşturuldu; bu durumda
-  kütüphanenin iç döngüsü skalar değer ürettiğinden çalışır hale geldi.
+\item \code{CfCActorCritic}'e GRU ile özdeş giriş kodlayıcısı eklendi:
+      \code{self.input = nn.Sequential(Linear(38,128), Tanh())}.
+\item CfC eğitim yapılandırması GRU ile eşitleştirildi:
+      500 dönem, harita başına 4 bölüm, yığın büyüklüğü 2.
+\item Tüm CfC ileri geçişlerine $\Delta t = 0.08\,\text{s}$ iletildi.
+      \code{ncps} kütüphanesinin iç döngüsünde skalar beklentisini
+      karşılamak üzere zaman tensörü $(1, T)$ boyutunda oluşturuldu.
 \end{enumerate}
 
 % =====================================================================
-\section{Sonuçlar}
+\section{Final Karşılaştırması}
 
-\subsection{Eğitim Kaybı Karşılaştırması}
+\subsection{Eğitim Kaybı}
 
-Aynı koşullarda 500 dönem eğitimden sonra:
+500 dönem sonunda:
 
 \begin{center}
 \begin{tabular}{lcc}
 \toprule
-\textbf{Model} & \textbf{Başlangıç kaybı} & \textbf{Son kayıp (dönem 500)} \\
+\textbf{Model} & \textbf{İlk kayıp} & \textbf{Son kayıp} \\
 \midrule
-GRU (BC) & 0.120 & $1.26 \times 10^{-4}$ \\
-CfC -- düzeltilmiş (BC) & 0.122 & $7.44 \times 10^{-5}$ \\
+GRU (BC)               & 0.120 & $1.26 \times 10^{-4}$ \\
+CfC düzeltilmiş (BC)   & 0.122 & $7.44 \times 10^{-5}$ \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-Eğitim kaybı açısından düzeltilmiş CfC, GRU'yu geride bırakmıştır.
+Düzeltilmiş CfC, eğitim kaybı açısından GRU'yu geride bırakmıştır.
 
-\subsection{Politika Değerlendirmesi (6 harita, 4 bölüm, max-steps = 900)}
+\subsection{Saf Politika Değerlendirmesi — 6 Harita}
 
-Tablo~\ref{tab:final} üç modeli aynı koşullarda karşılaştırmaktadır:
-(1) GRU BC, (2) CfC kırık (düzeltme öncesi), (3) CfC düzeltilmiş + 2 DAgger
-iterasyonu.
+Tablo~\ref{tab:final} üç modeli aynı koşullarda karşılaştırmaktadır
+(4 bölüm, max-steps = 900, A* kapalı).
 
 \begin{table}[h]
 \centering
-\caption{6 haritada saf politika değerlendirmesi (4 bölüm, max-steps = 900)}
+\caption{6 haritada saf politika değerlendirmesi}
 \label{tab:final}
 \begin{tabular}{lcccccc}
 \toprule
- & \multicolumn{2}{c}{\textbf{GRU BC}} & \multicolumn{2}{c}{\textbf{CfC kırık}} & \multicolumn{2}{c}{\textbf{CfC düzeltilmiş}} \\
+ & \multicolumn{2}{c}{\textbf{GRU BC}} &
+   \multicolumn{2}{c}{\textbf{CfC kırık}} &
+   \multicolumn{2}{c}{\textbf{CfC düzeltilmiş}} \\
 \cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
-\textbf{Harita} & Başarı & Ort. Adım & Başarı & Ort. Adım & Başarı & Ort. Adım \\
+\textbf{Harita} & Başarı & Adım & Başarı & Adım & Başarı & Adım \\
 \midrule
 \code{map\_01} & 0.00 &  93 & 0.00 &  55 & \textbf{1.00} & 445 \\
-\code{map\_02} & 0.00 & 312 & 0.00 &  19 & 0.00 & 900 \\
-\code{map\_04} & 0.00 & 126 & 0.00 & 161 & 0.00 & 900 \\
-\code{map\_05} & 0.00 & 648 & 0.00 & 128 & 0.00 & 900 \\
-\code{map\_06} & 0.00 & 103 & 0.00 & 103 & 0.00 & 900 \\
+\code{map\_02} & 0.00 & 312 & 0.00 &  19 & 0.00 & 900$^\dagger$ \\
+\code{map\_04} & 0.00 & 126 & 0.00 & 161 & 0.00 & 900$^\dagger$ \\
+\code{map\_05} & 0.00 & 648 & 0.00 & 128 & 0.00 & 900$^\dagger$ \\
+\code{map\_06} & 0.00 & 103 & 0.00 & 103 & 0.00 & 900$^\dagger$ \\
 \code{map\_07} & 0.00 & 242 & 0.00 & 180 & \textbf{1.00} & 231 \\
 \midrule
-\textbf{Toplam başarı} & \multicolumn{2}{c}{0/6} & \multicolumn{2}{c}{0/6} & \multicolumn{2}{c}{\textbf{2/6}} \\
+\textbf{Başarı toplamı} & \multicolumn{2}{c}{0/6} &
+                          \multicolumn{2}{c}{0/6} &
+                          \multicolumn{2}{c}{\textbf{2/6}} \\
 \bottomrule
+\multicolumn{7}{l}{$\dagger$ Timeout: çarpışmasız 900 adım, hedefe ulaşılamadı.}
 \end{tabular}
 \end{table}
 
-Düzeltme öncesi CfC tüm haritalarda çarpışma üretirken (ort. adım 19--180),
-düzeltme sonrası CfC iki haritada tam başarı, kalan dört haritada ise
-çarpışmasız 900 adımlık navigasyon elde etmiştir.
-
-\subsection{Bulguların Özeti}
-
-\begin{itemize}
-  \item CfC başarısızlığının kök nedeni tek bir bug değil; mimari, yapılandırma
-  ve entegrasyon hatalarının birleşimidir.
-  \item Giriş kodlayıcısının eklenmesi tek başına en büyük etkiyi doğurmuştur:
-  çarpışma oranı \%100'den \%0'a inmiştir.
-  \item Timeout gözlemleri (900 adım, çarpışmasız) modelin engelleri tanıdığını
-  ancak henüz uzun vadeli hedef takibini tam öğrenemediğini göstermektedir.
-  \item DAgger, BC'nin covariate shift sorununu azaltmıştır: 1. DAgger
-  iterasyonu sonrası \code{map\_05}'te \%100 başarı, 2. iterasyon sonrası
-  \code{map\_01} ve \code{map\_07}'de \%100 başarı elde edilmiştir.
-\end{itemize}
+Düzeltme öncesi CfC tüm haritalarda çarpışma üretirken,
+düzeltme sonrası 2 haritada tam başarı ve 4 haritada çarpışmasız navigasyon
+elde edilmiştir.
+Timeout gözlemleri modelin engelleri tanıdığını ancak uzun vadeli
+hedef takibini henüz tam öğrenemediğini göstermektedir.
 
 % =====================================================================
 \section{Sonuç}
 
-Bu çalışmada MuJoCo ortamında LNN/CfC tabanlı robot navigasyonu araştırılmıştır.
-Vize aşamasında GRU baseline için iki haritada tam başarı elde edilmiş;
-final aşamasında CfC politikasının neden sıfır başarı ürettiği sistematik
-biçimde analiz edilmiştir.
+Bu çalışmada MuJoCo tabanlı bir navigasyon ortamı kurulmuş, GRU ile başarılı
+bir referans yöntem oluşturulmuş ve CfC politikasının neden sıfır başarı
+ürettiği sistematik biçimde araştırılmıştır.
 
 Tespit edilen üç sorun --- giriş kodlayıcısı eksikliği, asimetrik eğitim
-bütçesi ve yanlış ODE zaman adımı --- düzeltildikten ve iki DAgger iterasyonu
-uygulandıktan sonra CfC, 6 haritanın 2'sinde tam başarı ve tüm haritalarda
-çarpışmasız hareket elde etmiştir.
+bütçesi ve yanlış ODE zaman adımı --- giderildikten sonra CfC, 6 haritanın
+2'sinde tam başarı ve tüm haritalarda çarpışmasız hareket elde etmiştir.
+Bu sonuçlar, CfC'nin eşit mimari koşullar ve doğru ODE entegrasyonu altında
+GRU ile rekabetçi hale gelebildiğini göstermektedir.
 
-Sonuçlar, CfC'nin eşit mimari koşullar ve doğru ODE entegrasyonu altında
-GRU ile rekabetçi hale gelebildiğini, ancak uzun vadeli hedef takibini
-güvenilir biçimde öğrenmesi için ek veri veya pekiştirmeli öğrenme aşamalarına
-ihtiyaç duyduğunu göstermektedir.
+Sonraki adımda holdout haritaları ve sensör gürültüsü altında dayanıklılık
+değerlendirmesi planlanmaktadır.
+
+\vspace{0.5em}
+\noindent\textbf{Kod:}
+\url{https://github.com/heimdilon/mujoco_lnn_navigation}
 
 \end{document}
