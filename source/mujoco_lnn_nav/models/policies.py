@@ -71,12 +71,14 @@ def _squashed_normal_action(
 class CfCActorCritic(BaseActorCritic):
     """Recurrent CfC/LNN policy backed by `ncps.torch.CfC`."""
 
-    def __init__(self, obs_dim: int, action_dim: int, hidden_size: int = 128):
+    def __init__(self, obs_dim: int, action_dim: int, hidden_size: int = 128, dt: float = 0.08):
         super().__init__()
         self.kind = "cfc"
         self.policy_impl = "ncps.torch.CfC"
+        self.dt = dt
+        self.input = nn.Sequential(nn.Linear(obs_dim, hidden_size), nn.Tanh())
         self.rnn = NcpsCfC(
-            obs_dim,
+            hidden_size,
             hidden_size,
             return_sequences=True,
             batch_first=True,
@@ -89,8 +91,14 @@ class CfCActorCritic(BaseActorCritic):
         self.critic = nn.Linear(hidden_size, 1)
         self.log_std = nn.Parameter(torch.full((action_dim,), -0.5))
 
+    def _timespans(self, seq: int, device: torch.device) -> torch.Tensor:
+        # shape (1, seq) — ncps timespans[:, t].squeeze() scalar döndürür, batch>1 için de çalışır
+        return torch.full((1, seq), self.dt, dtype=torch.float32, device=device)
+
     def forward(self, obs: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        output, _ = self.rnn(obs.unsqueeze(1))
+        enc = self.input(obs).unsqueeze(1)
+        ts = self._timespans(1, enc.device)
+        output, _ = self.rnn(enc, timespans=ts)
         features = output[:, -1]
         return self.actor(features), self.critic(features)
 
@@ -103,7 +111,9 @@ class CfCActorCritic(BaseActorCritic):
         return state
 
     def forward_recurrent(self, obs: torch.Tensor, state: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        output, next_state = self.rnn(obs.unsqueeze(1), state)
+        enc = self.input(obs).unsqueeze(1)
+        ts = self._timespans(1, enc.device)
+        output, next_state = self.rnn(enc, state, timespans=ts)
         features = output[:, -1]
         return self.actor(features), self.critic(features), next_state
 
@@ -120,7 +130,9 @@ class CfCActorCritic(BaseActorCritic):
     def forward_sequence(self, obs: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         is_unbatched = obs.dim() == 2
         sequence = obs.unsqueeze(0) if is_unbatched else obs
-        output, _ = self.rnn(sequence)
+        encoded = self.input(sequence)
+        ts = self._timespans(encoded.shape[1], encoded.device)
+        output, _ = self.rnn(encoded, timespans=ts)
         mean = self.actor(output)
         value = self.critic(output).squeeze(-1)
         if is_unbatched:
