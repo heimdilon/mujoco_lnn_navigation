@@ -1,0 +1,112 @@
+name: custom_map_14
+seed: 11
+num_envs: 16
+physics_dt: 0.02
+frame_skip: 4
+arena:
+  half_size: 4.0
+robot:
+  radius: 0.1
+  max_linear_velocity: 0.8
+  max_angular_velocity: 2.2
+  wheel_base: 0.34
+episode:
+  max_steps: 900
+goal:
+  radius: 0.24
+  min_distance: 1.2
+  max_distance: 3.4
+  observation_max_distance: 10.0
+sensors:
+  rays: 32
+  max_range: 4.0
+  noise_std: 0.0
+obstacles:
+  count:
+  - 6
+  - 6
+  radius:
+  - 0.12
+  - 0.28
+  box_probability: 0.25
+  min_clearance: 0.5
+reward:
+  progress_scale: 3.0
+  success_bonus: 10.0
+  collision_penalty: -8.0
+  timeout_penalty: -1.0
+  step_penalty: -0.012
+  near_obstacle_penalty: -0.04
+  action_smoothness_penalty: -0.02
+  heading_alignment_scale: 0.04
+map:
+  enabled: true
+  name: custom_map_14
+  base_task: open_clutter
+  start:
+  - 2.94199535962877
+  - 2.993503366988109
+  - 0.0
+  goal:
+  - -2.91415313225058
+  - 3.1016242432207077
+  jitter:
+    enabled: false
+    start_std: 0.0
+    goal_std: 0.0
+    yaw_std: 0.0
+  obstacles:
+  - id: wall_1778355717989
+    shape: box
+    x: -1.294663573085847
+    y: 2.7767981863353755
+    half_x: 1.1014211464677255
+    half_y: 0.08
+    radius: 1.1014211464677255
+    yaw: -1.6255937372889797
+    kind: wall
+  - id: wall_1778355721409
+    shape: box
+    x: 0.2366589327146169
+    y: 1.737355101689385
+    half_x: 1.2111724488295301
+    half_y: 0.08
+    radius: 1.2111724488295301
+    yaw: -0.007662685269539109
+    kind: wall
+  - id: wall_1778355725898
+    shape: box
+    x: 1.34106728538283
+    y: 0.23897911832946628
+    half_x: 1.3089877775113847
+    half_y: 0.08
+    radius: 1.3089877775113847
+    yaw: -1.545978728177223
+    kind: wall
+  - id: wall_1778355733654
+    shape: box
+    x: -2.598607888631091
+    y: -1.062181087768271
+    half_x: 1.262726782492432
+    half_y: 0.08
+    radius: 1.262726782492432
+    yaw: -0.029403288204004768
+    kind: wall
+  - id: wall_1778355743244
+    shape: box
+    x: 1.3781902552204173
+    y: -3.2380512706641524
+    half_x: 0.761374486351711
+    half_y: 0.08
+    radius: 0.761374486351711
+    yaw: -1.6012746907359425
+    kind: wall
+  - id: wall_1778355747233
+    shape: box
+    x: -2.4129930394431556
+    y: -2.662645238181554
+    half_x: 1.512789489148953
+    half_y: 0.08
+    radius: 1.512789489148953
+    yaw: 0.00613489235787595
+    kind: wall

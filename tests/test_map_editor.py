@@ -26,6 +26,28 @@ def test_map_editor_payload_builds_fixed_task_config():
     assert cfg["map"]["obstacles"][0]["yaw"] == 0.75
 
 
+def test_map_editor_payload_persists_safety_config():
+    cfg = build_task_config(
+        {
+            "name": "unit_custom_safety",
+            "base_task": "sparse_goal",
+            "arena_half": 3.0,
+            "start": {"x": -1.0, "y": -1.0, "yaw": 0.0},
+            "goal": {"x": 1.0, "y": 1.0},
+            "obstacles": [],
+            "jitter": {"enabled": False},
+            "safety": {
+                "robot_radius": 0.1,
+                "goal_radius": 0.3,
+                "obstacle_min_gap": 0.2,
+            },
+        }
+    )
+    assert cfg["robot"]["radius"] == 0.1
+    assert cfg["goal"]["radius"] == 0.3
+    assert cfg["obstacles"]["min_clearance"] == 0.2
+
+
 def test_map_editor_exposes_reset_controls():
     html = __import__("pathlib").Path("tools/map_editor/index.html").read_text(encoding="utf-8")
     app = __import__("pathlib").Path("tools/map_editor/app.js").read_text(encoding="utf-8")
@@ -34,3 +56,17 @@ def test_map_editor_exposes_reset_controls():
     assert "/app.js?v=" in html
     assert 'addEventListener("click", clearObstacles)' in app
     assert 'addEventListener("click", newBlankMap)' in app
+
+
+def test_map_editor_exposes_safety_analysis():
+    html = __import__("pathlib").Path("tools/map_editor/index.html").read_text(encoding="utf-8")
+    app = __import__("pathlib").Path("tools/map_editor/app.js").read_text(encoding="utf-8")
+    server = __import__("pathlib").Path("scripts/map_editor.py").read_text(encoding="utf-8")
+    assert 'id="robotRadius"' in html
+    assert 'id="nearestGap"' in html
+    assert 'id="robotCorridor"' in html
+    assert 'id="safetyWarnings"' in html
+    assert "function obstaclePairClearance" in app
+    assert "function analyzeMap" in app
+    assert "robot_radius" in app
+    assert 'path.startswith("/api/base-tasks/")' in server

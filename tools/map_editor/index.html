@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>MuJoCo Map Editor</title>
+    <link rel="icon" href="data:," />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
@@ -47,7 +48,7 @@
         <section class="panel map-list">
           <div class="row">
             <label>Saved maps</label>
-            <button id="refreshMaps" class="icon-button" title="Refresh">↻</button>
+            <button id="refreshMaps" class="icon-button" title="Refresh">Refresh</button>
           </div>
           <select id="mapList" size="6"></select>
           <div class="row">
@@ -105,14 +106,39 @@
           <input id="jitterYaw" type="number" min="0" step="0.01" value="0" />
         </section>
 
+        <section class="panel">
+          <h2>Safety</h2>
+          <label>Robot radius</label>
+          <input id="robotRadius" type="number" min="0.05" step="0.01" value="0.18" />
+          <label>Approach margin</label>
+          <input id="approachMargin" type="number" min="0" step="0.01" value="0.12" />
+          <label>Obstacle min gap</label>
+          <input id="minObstacleGap" type="number" min="0" step="0.01" value="0.32" />
+          <label class="checkline">
+            <input id="showSafetyBuffers" type="checkbox" checked />
+            Show safety buffers
+          </label>
+        </section>
+
         <section class="panel metrics">
           <h2>Map</h2>
           <div><span>Obstacles</span><strong id="obstacleCount">0</strong></div>
           <div><span>Start-goal</span><strong id="goalDistance">0.00 m</strong></div>
+          <div><span>Nearest gap</span><strong id="nearestGap">--</strong></div>
+          <div><span>Robot corridor</span><strong id="robotCorridor">--</strong></div>
+          <div><span>Start clearance</span><strong id="startClearance">--</strong></div>
+          <div><span>Goal clearance</span><strong id="goalClearance">--</strong></div>
+          <div><span>Direct route</span><strong id="directRouteClearance">--</strong></div>
+          <div><span>Selected gap</span><strong id="selectedGap">--</strong></div>
           <div><span>File</span><strong id="filePath">not saved</strong></div>
+        </section>
+
+        <section class="panel warnings">
+          <h2>Warnings</h2>
+          <ul id="safetyWarnings"></ul>
         </section>
       </aside>
     </main>
-    <script src="/app.js?v=20260504-reset-controls"></script>
+    <script src="/app.js?v=20260508-safety-persist"></script>
   </body>
 </html>

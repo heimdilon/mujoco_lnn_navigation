@@ -6,16 +6,17 @@ frame_skip: 4
 arena:
   half_size: 4.0
 robot:
-  radius: 0.18
+  radius: 0.1
   max_linear_velocity: 0.8
   max_angular_velocity: 2.2
   wheel_base: 0.34
 episode:
-  max_steps: 180
+  max_steps: 900
 goal:
   radius: 0.24
   min_distance: 1.2
   max_distance: 3.4
+  observation_max_distance: 10.0
 sensors:
   rays: 32
   max_range: 4.0
@@ -28,7 +29,7 @@ obstacles:
   - 0.12
   - 0.28
   box_probability: 0.25
-  min_clearance: 0.32
+  min_clearance: 0.5
 reward:
   progress_scale: 3.0
   success_bonus: 10.0
@@ -122,8 +123,8 @@ map:
     half_y: 0.22
   - id: cylinder_1777902210979
     shape: cylinder
-    x: 2.3109048723897905
-    y: 2.4315545243619496
+    x: 2.7153284671532845
+    y: 2.547688505075274
     radius: 0.22
     half_x: 0.22
     half_y: 0.22
@@ -136,8 +137,8 @@ map:
     half_y: 0.22
   - id: cylinder_1777902211514
     shape: cylinder
-    x: 1.9211136890951268
-    y: 0.4733178654292347
+    x: 2.233576642335766
+    y: 1.2484184320825733
     radius: 0.22
     half_x: 0.22
     half_y: 0.22
@@ -150,8 +151,8 @@ map:
     half_y: 0.22
   - id: cylinder_1777902212204
     shape: cylinder
-    x: 1.679814385150812
-    y: -0.4825986078886304
+    x: 2.0583941605839415
+    y: -0.050851640910127394
     radius: 0.22
     half_x: 0.22
     half_y: 0.22
@@ -178,8 +179,8 @@ map:
     half_y: 0.22
   - id: cylinder_1777902214183
     shape: cylinder
-    x: 2.1160092807424586
-    y: -1.5498839907192572
+    x: 2.2481751824817513
+    y: -1.1457421518590327
     radius: 0.22
     half_x: 0.22
     half_y: 0.22

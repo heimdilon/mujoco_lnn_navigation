@@ -1,0 +1,114 @@
+name: custom_map_12
+seed: 11
+num_envs: 16
+physics_dt: 0.02
+frame_skip: 4
+arena:
+  half_size: 4.0
+robot:
+  radius: 0.1
+  max_linear_velocity: 0.8
+  max_angular_velocity: 2.2
+  wheel_base: 0.34
+episode:
+  max_steps: 900
+goal:
+  radius: 0.24
+  min_distance: 1.2
+  max_distance: 3.4
+  observation_max_distance: 10.0
+sensors:
+  rays: 32
+  max_range: 4.0
+  noise_std: 0.0
+obstacles:
+  count:
+  - 8
+  - 8
+  radius:
+  - 0.12
+  - 0.28
+  box_probability: 0.25
+  min_clearance: 0.5
+reward:
+  progress_scale: 3.0
+  success_bonus: 10.0
+  collision_penalty: -8.0
+  timeout_penalty: -1.0
+  step_penalty: -0.012
+  near_obstacle_penalty: -0.04
+  action_smoothness_penalty: -0.02
+  heading_alignment_scale: 0.04
+map:
+  enabled: true
+  name: custom_map_12
+  base_task: open_clutter
+  start:
+  - 0.07424593967517357
+  - 3.2547563521878624
+  - 0.0
+  goal:
+  - -0.22273781902552248
+  - -2.8055683321853246
+  jitter:
+    enabled: false
+    start_std: 0.0
+    goal_std: 0.0
+    yaw_std: 0.0
+  obstacles:
+  - id: cylinder_1778355624691
+    shape: cylinder
+    x: -2.4315545243619487
+    y: 1.2408353801116592
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1778355625077
+    shape: cylinder
+    x: -0.2505800464037127
+    y: 1.3336428047056268
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1778355625518
+    shape: cylinder
+    x: 1.3085846867749416
+    y: 1.7930395564457662
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1778355625990
+    shape: cylinder
+    x: 1.6519721577726205
+    y: -0.27656601199970954
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1778355626424
+    shape: cylinder
+    x: -1.104408352668214
+    y: -0.3693734365936767
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1778355626993
+    shape: cylinder
+    x: -2.8584686774941996
+    y: -0.20232007232453553
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1778355627912
+    shape: cylinder
+    x: 2.6450116009280737
+    y: 1.3846868882323093
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1778355628498
+    shape: cylinder
+    x: 0.1113689095127608
+    y: -0.6849186802131668
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22

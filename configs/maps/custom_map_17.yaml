@@ -1,4 +1,4 @@
-name: custom_map_05
+name: custom_map_17
 seed: 11
 num_envs: 16
 physics_dt: 0.02
@@ -23,8 +23,8 @@ sensors:
   noise_std: 0.0
 obstacles:
   count:
-  - 2
-  - 2
+  - 3
+  - 3
   radius:
   - 0.12
   - 0.28
@@ -41,36 +41,45 @@ reward:
   heading_alignment_scale: 0.04
 map:
   enabled: true
-  name: custom_map_05
+  name: custom_map_17
   base_task: open_clutter
   start:
-  - -3.0371229698375872
-  - -3.0939675174013916
+  - -3.2389791183294663
+  - 3.273781902552205
   - 0.0
   goal:
-  - 2.9721577726218094
-  - 3.1102088167053363
+  - -0.1299303944315553
+  - -0.11368909512760972
   jitter:
     enabled: false
     start_std: 0.0
     goal_std: 0.0
     yaw_std: 0.0
   obstacles:
-  - id: wall_1777902777058
+  - id: wall_1778355851499
     shape: box
-    x: -2.2877030162412995
-    y: 0.05104408352668255
-    half_x: 1.6751804410157503
+    x: -2.0
+    y: 0.24825986078886308
+    half_x: 1.7355050436009574
     half_y: 0.08
-    radius: 1.6751804410157503
-    yaw: 0.002770076017243922
+    radius: 1.7355050436009574
+    yaw: -1.5681225363752518
     kind: wall
-  - id: wall_1777902778904
+  - id: wall_1778355853849
     shape: box
-    x: 2.2877030162412986
-    y: 0.02320185614849235
-    half_x: 1.5824278247127634
+    x: -0.18561484918793525
+    y: -1.3805104408352662
+    half_x: 1.4756380510440836
     half_y: 0.08
-    radius: 1.5824278247127634
-    yaw: 0.008797426993779776
+    radius: 1.4756380510440836
+    yaw: 0.0
+    kind: wall
+  - id: wall_1778355856629
+    shape: box
+    x: 1.3689095127610202
+    y: 0.62877030162413
+    half_x: 1.6334172642769342
+    half_y: 0.08
+    radius: 1.6334172642769342
+    yaw: 1.56795542534672
     kind: wall

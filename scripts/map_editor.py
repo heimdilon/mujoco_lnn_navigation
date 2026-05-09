@@ -38,6 +38,25 @@ def map_path(name: str) -> Path:
     return MAP_DIR / f"{safe_name(name)}.yaml"
 
 
+def optional_float(value: object) -> float | None:
+    if value is None:
+        return None
+    return float(value)
+
+
+def apply_safety_config(config: dict, payload: dict) -> None:
+    safety = payload.get("safety") or {}
+    robot_radius = optional_float(safety.get("robot_radius", payload.get("robot_radius")))
+    goal_radius = optional_float(safety.get("goal_radius", payload.get("goal_radius")))
+    min_obstacle_gap = optional_float(safety.get("obstacle_min_gap", payload.get("obstacle_min_gap")))
+    if robot_radius is not None:
+        config.setdefault("robot", {})["radius"] = robot_radius
+    if goal_radius is not None:
+        config.setdefault("goal", {})["radius"] = goal_radius
+    if min_obstacle_gap is not None:
+        config.setdefault("obstacles", {})["min_clearance"] = min_obstacle_gap
+
+
 def build_task_config(payload: dict) -> dict:
     base_name = safe_name(payload.get("base_task", "open_clutter"))
     base_path = TASK_DIR / f"{base_name}.yaml"
@@ -48,6 +67,7 @@ def build_task_config(payload: dict) -> dict:
     obstacles = payload.get("obstacles", [])
     config["name"] = map_name
     config["arena"]["half_size"] = float(payload.get("arena_half", config["arena"]["half_size"]))
+    apply_safety_config(config, payload)
     config["obstacles"]["count"] = [len(obstacles), len(obstacles)]
     config["map"] = {
         "enabled": True,
@@ -130,6 +150,17 @@ class MapEditorHandler(SimpleHTTPRequestHandler):
             tasks = sorted(item.stem for item in TASK_DIR.glob("*.yaml"))
             self.send_json(200, {"tasks": tasks})
             return
+        if path.startswith("/api/base-tasks/"):
+            name = unquote(path.removeprefix("/api/base-tasks/"))
+            try:
+                file_path = TASK_DIR / f"{safe_name(name)}.yaml"
+                if not file_path.exists():
+                    self.send_json(404, {"error": "Base task not found."})
+                    return
+                self.send_json(200, {"name": file_path.stem, "path": str(file_path), "config": load_yaml(file_path)})
+            except Exception as exc:
+                self.send_json(400, {"error": str(exc)})
+            return
         if path == "/api/maps":
             maps = sorted(item.stem for item in MAP_DIR.glob("*.yaml"))
             self.send_json(200, {"maps": maps})
@@ -182,12 +213,19 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def print_startup_line(text: str) -> None:
+    try:
+        print(text)
+    except Exception:
+        pass
+
+
 def main() -> None:
     args = parse_args()
     MAP_DIR.mkdir(parents=True, exist_ok=True)
     server = ThreadingHTTPServer((args.host, args.port), MapEditorHandler)
-    print(f"Map editor: http://{args.host}:{args.port}")
-    print(f"Maps are written to: {MAP_DIR}")
+    print_startup_line(f"Map editor: http://{args.host}:{args.port}")
+    print_startup_line(f"Maps are written to: {MAP_DIR}")
     server.serve_forever()
 
 

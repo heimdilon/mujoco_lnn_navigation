@@ -2,10 +2,28 @@
 
 **📄 [Proje Raporu (PDF)](report/build/main.pdf)**
 
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/heimdilon/mujoco_lnn_navigation/blob/master/notebooks/colab_custom22_training.ipynb)
+
 MuJoCo ortamında diferansiyel sürüşlü bir robotun 32 ışınlı LiDAR gözlemiyle
 engel içeren haritalarda hedefe ulaşması araştırılmıştır.
 Projenin hedefi LNN/CfC tabanlı politikayı GRU ve LSTM gibi klasik yinelemeli
 ağlarla aynı koşullar altında karşılaştırmaktır.
+
+## Colab ile Eğitim
+
+Custom22 CfC eğitimini Google Colab üzerinde çalıştırmak için
+[`notebooks/colab_custom22_training.ipynb`](notebooks/colab_custom22_training.ipynb)
+dosyasını aç veya yukarıdaki **Open in Colab** rozetini kullan.
+
+Colab'de `Runtime > Change runtime type > GPU` seçildikten sonra notebook sırasıyla
+repo kurulumunu, 22 haritalı BC eğitimini, 2 DAgger iterasyonunu ve train+holdout
+haritalarda saf politika değerlendirmesini çalıştırır. Lokal makinedeki `latest.pt`
+checkpoint'inden devam etmek istersen dosyayı Google Drive'a koyup notebook içindeki
+`RESUME_CHECKPOINT` alanına Drive yolunu yazman yeterli.
+
+Not: Colab rozeti GitHub'daki `master` branch'i açar; notebook ve custom22
+konfigürasyonlarının Colab'de görünmesi için değişikliklerin GitHub'a push edilmiş
+olması gerekir.
 
 ## Sonuçlar
 
@@ -49,7 +67,7 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
-Beklenen: `19 passed`
+Beklenen: `21 passed`
 
 ---
 

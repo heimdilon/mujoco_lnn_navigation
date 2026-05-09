@@ -1,4 +1,4 @@
-name: custom_map_05
+name: custom_map_22
 seed: 11
 num_envs: 16
 physics_dt: 0.02
@@ -23,8 +23,8 @@ sensors:
   noise_std: 0.0
 obstacles:
   count:
-  - 2
-  - 2
+  - 4
+  - 4
   radius:
   - 0.12
   - 0.28
@@ -41,36 +41,48 @@ reward:
   heading_alignment_scale: 0.04
 map:
   enabled: true
-  name: custom_map_05
+  name: custom_map_22
   base_task: open_clutter
   start:
-  - -3.0371229698375872
-  - -3.0939675174013916
+  - 2.51508120649652
+  - -2.9034800518416475
   - 0.0
   goal:
-  - 2.9721577726218094
-  - 3.1102088167053363
+  - -2.988399071925754
+  - -2.920185841429814
   jitter:
     enabled: false
     start_std: 0.0
     goal_std: 0.0
     yaw_std: 0.0
   obstacles:
-  - id: wall_1777902777058
+  - id: wall_1778356149673
     shape: box
-    x: -2.2877030162412995
-    y: 0.05104408352668255
-    half_x: 1.6751804410157503
+    x: -0.20417633410672886
+    y: -1.5090484973172846
+    half_x: 2.4192403875936965
     half_y: 0.08
-    radius: 1.6751804410157503
-    yaw: 0.002770076017243922
+    radius: 2.4192403875936965
+    yaw: -1.5343441485249885
     kind: wall
-  - id: wall_1777902778904
-    shape: box
-    x: 2.2877030162412986
-    y: 0.02320185614849235
-    half_x: 1.5824278247127634
-    half_y: 0.08
-    radius: 1.5824278247127634
-    yaw: 0.008797426993779776
-    kind: wall
+  - id: cylinder_1778356178257
+    shape: cylinder
+    x: -0.38979118329466367
+    y: 2.7693734932388345
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1778356179825
+    shape: cylinder
+    x: -2.88631090487239
+    y: 2.166125233378046
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
+  - id: cylinder_1778356180634
+    shape: cylinder
+    x: 2.3573085846867743
+    y: 2.166125233378046
+    radius: 0.22
+    half_x: 0.22
+    half_y: 0.22
