@@ -2,6 +2,10 @@
 
 **📄 [Proje Raporu (PDF)](report/build/main.pdf)**
 
+**Haftalık rapor:** [11 Mayıs 2026 haftalık raporu](report/weekly_2026_05_11/build/weekly_report.pdf)
+dinamik harita desteğini, saf `cfc_deep192` mimari değişikliğini ve 24 haritalık
+değerlendirmede elde edilen **21/24 başarı** sonucunu görsellerle özetler.
+
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/heimdilon/mujoco_lnn_navigation/blob/master/notebooks/colab_custom22_training.ipynb)
 
 MuJoCo ortamında diferansiyel sürüşlü bir robotun 32 ışınlı LiDAR gözlemiyle
