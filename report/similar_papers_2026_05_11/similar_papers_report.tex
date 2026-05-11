@@ -1,0 +1,348 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{fontspec}
+\usepackage[turkish]{babel}
+\usepackage[a4paper,margin=2.15cm]{geometry}
+\usepackage{setspace}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{caption}
+\usepackage{float}
+\usepackage[table]{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit}
+\usepackage[colorlinks=true,linkcolor=black,urlcolor=blue,citecolor=black]{hyperref}
+
+\setmainfont{Times New Roman}
+\setsansfont{Arial}
+\onehalfspacing
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\okcell}{\cellcolor{green!18}\textbf{Var}}
+\newcommand{\partcell}{\cellcolor{yellow!25}\textbf{Kısmi}}
+\newcommand{\nocell}{\cellcolor{red!9}Yok}
+\newcommand{\metric}[2]{\textbf{#1}\\{\Large #2}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+\title{\textbf{Benzer Makaleler Karşılaştırma Raporu}\\
+Saf LNN/CfC Mobil Robot Navigasyonu}
+\author{Orkun Koray GÜNGÖR}
+\date{11 Mayıs 2026}
+
+\begin{document}
+\shorthandoff{=}
+\maketitle
+
+\begin{abstract}
+Bu raporda \code{benzer-makaleler} klasörüne indirilen dört çalışma incelendi ve
+MuJoCo tabanlı saf LNN/CfC mobil robot navigasyonu çalışmasıyla karşılaştırıldı.
+İncelenen literatür, LNN ailesinin robotik navigasyon için güçlü bir yöntemsel
+temel sunduğunu gösteriyor; ancak okunan çalışmaların hiçbiri MuJoCo,
+diferansiyel sürüşlü mobil robot, LiDAR/range gözlemi, saf CfC politika,
+BC+DAgger eğitimi ve statik/dinamik harita değerlendirmesini aynı anda
+birleştirmiyor. En yakın yöntemsel çalışma Vorbach ve ark. tarafından sunulan
+görsel drone navigasyonu; en yakın platform/dinamik ortam çalışması ise Ao ve
+ark. tarafından sunulan kalabalık ortamda NCP tabanlı mobil robot
+navigasyonudur.
+\end{abstract}
+
+\section{Kapsam ve Kendi Çalışmamızın Profili}
+
+Bu inceleme dört PDF ile sınırlıdır: Vorbach ve ark. (2021), Ao ve ark. (2026),
+Tanna ve ark. (2024) ve Shang--Hu (2022). Amaç, bu çalışmaların bizim
+\emph{saf LNN/CfC mobil robot navigasyonu} çalışmamıza hangi eksenlerde
+benzediğini ve hangi eksenlerde ayrıldığını netleştirmektir.
+
+\begin{table}[H]
+\centering
+\caption{Bu raporda referans alınan mevcut çalışma profili}
+\begin{tabularx}{\linewidth}{@{}p{0.28\linewidth}Y@{}}
+\toprule
+\textbf{Öğe} & \textbf{Mevcut çalışma} \\
+\midrule
+Platform & MuJoCo ortamında diferansiyel sürüşlü mobil robot. \\
+Gözlem & 38 boyutlu vektör: hedef göreli bilgileri, robot hızı, önceki aksiyon ve 32 ışınlı LiDAR/range taraması. \\
+Politika & Saf LNN/CfC: \code{Linear+Tanh -> CfC -> CfC -> actor/critic}. \\
+Eğitim & Behavior cloning + DAgger. Runtime sırasında waypoint takipçisi veya safety filter kullanılmıyor. \\
+Değerlendirme & 22 custom statik harita + 2 dinamik harita. Son modelde 21/24 harita başarısı, 3/24 çarpışma, 0 timeout. \\
+Model adı & \code{cfc\_deep192\_custom22\_dynamic\_dagger2}. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Kısa Terminoloji Notu}
+
+\textbf{LTC} bir sürekli zamanlı RNN hücresidir; gizli durumun değişimini ODE
+benzeri bir dinamikle modeller ve zamansal bağımlılığı fiziksel sistemlere daha
+yakın bir biçimde taşır. \textbf{CfC} aynı sürekli zamanlı fikri daha hızlı
+çalışacak kapalı-form bir güncelleme ile uygular; bu nedenle pratik eğitim ve
+inference maliyeti LTC'ye göre daha düşüktür. \textbf{NCP} ise tek başına ayrı
+bir hücreden çok, biyolojik devrelerden esinlenen seyrek/yorumlanabilir bağlantı
+topolojisi ve politika tasarımıdır; çoğu çalışmada NCP, LTC ya da CfC tabanlı
+nöral dinamiklerle birlikte kullanılır.
+
+Bu ayrım önemlidir: bazı makaleler ``NCP'' derken politika topolojisini, bazıları
+``LTC'' derken ODE tabanlı hücreyi, bazıları da ``CfC'' derken kapalı-form
+sürekli-zaman hücresini kasteder. Bizim son modelimiz NCP wiring kullanmadan,
+saf ve derin CfC hücreleriyle kurulmuştur.
+
+\section{İncelenen Makaleler}
+
+\begin{table}[H]
+\centering
+\caption{Okunan dört makalenin hızlı özeti}
+\small
+\begin{tabularx}{\linewidth}{@{}p{0.06\linewidth}p{0.29\linewidth}p{0.21\linewidth}Y@{}}
+\toprule
+\textbf{No} & \textbf{Çalışma} & \textbf{Ana odak} & \textbf{Bizim işle ilişkisi} \\
+\midrule
+1 & Vorbach ve ark. (2021), \emph{Causal Navigation by Continuous-time Neural Networks} &
+NCP/LTC/CfC ailesiyle görsel drone navigasyonu &
+En güçlü yöntemsel akraba: sürekli zamanlı politika, imitation learning, kapalı çevrim navigasyon ve dinamik hedef takibi var; ancak platform drone ve sensör RGB kamera. \\
+2 & Ao ve ark. (2026), \emph{Human-Centric Motion Planning in Crowded Spaces} &
+SNCP-PPO ile kalabalık ortamda mobil robot navigasyonu &
+En güçlü platform ve dinamik ortam benzeri: mobil robot, hareketli insan engelleri ve NCP tabanlı karar verme var; ancak eğitim PPO, temsil sosyal/state tabanlı ve yapı hibrit. \\
+3 & Tanna ve ark. (2024), \emph{Optimizing Liquid Neural Networks} &
+LTC ve CfC karşılaştırması, behavior cloning ve steering tahmini &
+Mimari ve eğitim motivasyonu için yararlı: LTC/CfC karşılaştırması ve BC var; fakat robot navigasyonu veya LiDAR tabanlı kapalı çevrim değerlendirme yok. \\
+4 & Shang ve Hu (2022), \emph{CALNet} &
+LiDAR-kamera online kalibrasyonu için LTC içeren ağ &
+LiDAR ile LTC'nin robotik algıda kullanıldığı yakın örnek; fakat politika, navigasyon ve kontrol problemi değil. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Literatür Konumlandırma Haritası}
+
+\begin{figure}[H]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  x=1cm,y=1cm,
+  point/.style={circle, draw=black!55, thick, minimum size=0.78cm, align=center, font=\sffamily\small},
+  label/.style={align=left, font=\sffamily\small},
+  axislabel/.style={font=\sffamily\small}
+]
+  \draw[->, thick] (0,0) -- (12.3,0) node[axislabel, below left=2pt and -8pt]
+    {Platform/sensör benzerliği};
+  \draw[->, thick] (0,0) -- (0,8.6) node[axislabel, above, rotate=90, anchor=south]
+    {Politika/eğitim benzerliği};
+
+  \node[axislabel, anchor=north west] at (0,-0.35) {Düşük};
+  \node[axislabel, anchor=north east] at (12.1,-0.35) {Yüksek};
+  \node[axislabel, anchor=east] at (-0.15,0.2) {Düşük};
+  \node[axislabel, anchor=east] at (-0.15,8.15) {Yüksek};
+
+  \draw[dashed, gray!55] (9.1,6.0) ellipse (2.3cm and 1.45cm);
+  \node[label, text=gray!40!black] at (8.0,7.7) {Boşluk:\\mobile robot + LiDAR\\+ saf CfC + BC/DAgger};
+
+  \node[point, fill=blue!18] (vorbach) at (2.3,7.2) {V};
+  \node[label, right=0.12cm of vorbach] {Vorbach 2021\\drone + RGB + IL};
+
+  \node[point, fill=green!18] (ao) at (8.6,4.4) {A};
+  \node[label, right=0.12cm of ao] {Ao 2026\\mobile robot + crowd + PPO};
+
+  \node[point, fill=orange!22] (tanna) at (4.4,5.3) {T};
+  \node[label, right=0.12cm of tanna] {Tanna 2024\\LTC/CfC + BC benchmark};
+
+  \node[point, fill=purple!17] (calnet) at (7.1,1.6) {C};
+  \node[label, right=0.12cm of calnet] {CALNet 2022\\LiDAR + LTC calibration};
+
+  \node[point, fill=red!20, minimum size=0.92cm] (ours) at (10.6,7.1) {\textbf{Biz}};
+  \node[label, right=0.12cm of ours] {MuJoCo + diff-drive\\LiDAR + saf CfC\\BC+DAgger};
+\end{tikzpicture}}
+\caption{Dört makalenin mevcut çalışmaya göre konumu. Vorbach yönteme, Ao platforma,
+Tanna mimari karşılaştırmaya, CALNet ise LiDAR/LTC sensör tarafına yakındır.}
+\end{figure}
+
+\clearpage
+\section{Özellik Örtüşmesi}
+
+\begin{table}[H]
+\centering
+\caption{Çalışmaların temel özelliklere göre karşılaştırılması}
+{\scriptsize
+\setlength{\tabcolsep}{2.5pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\linewidth}{@{}p{0.17\linewidth}p{0.09\linewidth}p{0.105\linewidth}p{0.085\linewidth}p{0.09\linewidth}p{0.10\linewidth}p{0.085\linewidth}Y@{}}
+\toprule
+\textbf{Çalışma} & \textbf{LNN/CT} & \textbf{Nav. politika} & \textbf{Mobil} & \textbf{LiDAR} & \textbf{Dinamik} & \textbf{IL/BC} & \textbf{Not} \\
+\midrule
+Bizim çalışma & \okcell & \okcell & \okcell & \okcell & \okcell & \okcell & Saf deep CfC, MuJoCo, 24 harita. \\
+Vorbach 2021 & \okcell & \okcell & \nocell & \nocell & \okcell & \okcell & Drone ve RGB kamera; yöntemsel olarak çok yakın. \\
+Ao 2026 & \okcell & \okcell & \okcell & \partcell & \okcell & \nocell & Sosyal/state temsili, PPO, SNCP ve graph/attention bileşenleri. \\
+Tanna 2024 & \okcell & \partcell & \nocell & \nocell & \partcell & \okcell & Atari, steering ve GHI benchmark; kapalı çevrim robot testi yok. \\
+CALNet 2022 & \okcell & \nocell & \partcell & \okcell & \partcell & \nocell & LiDAR-kamera kalibrasyonu; kontrol/navigasyon politikası değil. \\
+\bottomrule
+\end{tabularx}}
+\end{table}
+
+\section{Makale Bazlı Değerlendirme}
+
+\subsection{Vorbach ve ark. (2021)}
+
+Bu çalışma bizim işin en güçlü yöntemsel dayanağıdır. Yazarlar sürekli zamanlı
+nöral ağların, özellikle NCP/LTC çizgisindeki modellerin, kapalı çevrim görsel
+navigasyonda daha sağlam nedensel temsiller öğrenebildiğini savunur. Deneylerde
+drone, RGB görüntülerden hedefe gitme, hareketli hedefi takip etme ve daha uzun
+hafıza gerektiren görevlerde test edilir. Pasif validasyon kaybı iyi görünse bile
+kapalı çevrim testte birçok modelin başarısız olması, bizim çalışmada da önemli
+olan bir noktayı destekler: gerçek değerlendirme, modelin ortamla etkileşime
+girdiği rollout üzerinde yapılmalıdır.
+
+Bizim çalışmayla benzerlikler güçlüdür: sürekli zamanlı politika, imitation
+learning, kapalı çevrim navigasyon ve dinamik nesne/engel karşılaşmaları. Temel
+fark ise sensör ve platformdadır. Vorbach ve ark. drone + kamera ile çalışırken,
+biz düşük boyutlu LiDAR/range vektörüyle diferansiyel sürüşlü mobil robotu test
+ediyoruz. Bu nedenle bu makale ``aynı problem'' değil, ``aynı yöntem ailesinin
+navigasyonda çalıştığını gösteren ana referans'' olarak kullanılmalıdır.
+
+\subsection{Ao ve ark. (2026)}
+
+Ao ve ark. makalesi platform açısından en yakın çalışmadır. Problem, kalabalık
+insan ortamında mobil robotun güvenli ve sosyal olarak uyumlu hareket etmesidir.
+SNCP-PPO yaklaşımı NCP tabanlı sürekli zamanlı bir ağ, actor-critic yapı, sosyal
+baskı indeksi ve PPO eğitimini birleştirir. Simülasyon ve gerçek Turtlebot
+deneylerinde, 10--20 kişilik dinamik senaryolarda yüzde 93--95 başarı raporlanır.
+
+Bu çalışma bizim dinamik harita hedefimizle doğrudan konuşur: hareketli varlıklar,
+çarpışma oranı, timeout ve başarı oranı aynı değerlendirme diline yakındır. Ancak
+bizim çalışmadan önemli biçimde ayrılır. Ao ve ark. sosyal navigasyon problemine
+odaklanır; gözlem temsili insan/robot state ve grafik etkileşimleri üzerinden
+kurulur. Eğitim PPO ile yapılır ve model saf CfC değildir; NCP, attention,
+spatio-temporal graph ve ödül tasarımı birlikte kullanılır. Bu nedenle Ao ve ark.
+``mobil robot + dinamik ortam'' benzerliğini verir, fakat ``LiDAR + saf CfC +
+BC/DAgger'' boşluğunu kapatmaz.
+
+\subsection{Tanna ve ark. (2024)}
+
+Tanna ve ark. çalışması doğrudan navigasyon makalesi değildir; fakat LTC ve CfC
+hücrelerini pratik görevlerde karşılaştırdığı için mimari seçimimizi destekleyen
+bir kaynaktır. Çalışmada Atari Breakout behavior cloning, otonom sürüş için
+steering angle tahmini ve GHI tahmini incelenir. Sonuçlarda behavior cloning
+görevinde LTC ve CfC'nin yakın performans verdiği, steering tahmininde CfC'nin
+düşük MSE ile öne çıktığı, bazı zaman serisi görevlerinde ise LTC'nin daha iyi
+olduğu raporlanır.
+
+Bizim için ana çıkarım şudur: CfC seçimi yalnızca teorik bir tercih değildir;
+BC/steering türü aksiyon tahmini görevlerinde de pratik olarak anlamlıdır. Ancak
+Tanna ve ark. robotun kapalı çevrim ortamda çarpışma/timeout ürettiği bir
+navigasyon problemi çözmez. Dolayısıyla bu makale yöntemsel destek ve
+hiperparametre tartışması için kullanılmalı, mobil robot navigasyonunda doğrudan
+rakip çalışma gibi sunulmamalıdır.
+
+\subsection{Shang ve Hu (2022) -- CALNet}
+
+CALNet, 3D LiDAR ve 2D kamera arasındaki online ekstrinsik kalibrasyonu öğrenen
+bir ağdır. Yapıda channel attention, hybrid spatial pyramid pooling ve LTC
+bileşeni birlikte kullanılır. Çalışma, LiDAR tabanlı robotik algı ve LTC'nin aynı
+sistemde yer aldığı önemli bir örnektir; ayrıca robotik algı tarafında LNN
+ailesinin kullanılabileceğini gösterir.
+
+Fakat CALNet bizim navigasyon çalışmamıza yalnızca sensör/mimari kesişiminden
+yakındır. Ağ bir politika üretmez, robot kontrolü yapmaz ve başarı/çarpışma gibi
+navigasyon metrikleriyle değerlendirilmez. Bu yüzden CALNet, ``LiDAR + LTC''
+bağlantısını göstermek için faydalıdır; ama bizim ana katkımız olan saf CfC
+politika ile LiDAR tabanlı mobil robot navigasyonu bu çalışmada yoktur.
+
+\section{Benzerlik Puanlaması}
+
+\begin{table}[H]
+\centering
+\caption{Nitel benzerlik puanlaması: 1 düşük, 5 yüksek}
+\small
+\begin{tabularx}{\linewidth}{@{}p{0.18\linewidth}ccccY@{}}
+\toprule
+\textbf{Çalışma} & \textbf{Yöntem} & \textbf{Platform} & \textbf{Sensör} & \textbf{Eğitim} & \textbf{Yorum} \\
+\midrule
+Vorbach 2021 & 5 & 1 & 1 & 5 & Saf/kompakt sürekli zamanlı politika ve IL nedeniyle ana yöntem referansı. \\
+Ao 2026 & 4 & 5 & 2 & 1 & Mobil robot ve dinamik insan ortamı çok yakın; PPO ve sosyal graph yapısı farklı. \\
+Tanna 2024 & 4 & 1 & 1 & 4 & LTC/CfC ve BC deneyleri yararlı; robot navigasyonu yok. \\
+CALNet 2022 & 2 & 2 & 5 & 1 & LiDAR + LTC kesişimi var; kalibrasyon problemi, kontrol değil. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Net Bulgular}
+
+\begin{enumerate}
+  \item \textbf{Doğrudan eşleşen çalışma bulunmadı.} Okunan dört makalenin hiçbiri
+  MuJoCo + diferansiyel sürüşlü mobil robot + LiDAR/range gözlemi + saf CfC
+  politika + BC/DAgger + dinamik harita değerlendirmesini aynı anda kapsamıyor.
+
+  \item \textbf{Yöntemsel çizgi güçlü.} Vorbach ve ark. sürekli zamanlı/nöral
+  circuit politikaların kapalı çevrim navigasyonda neden anlamlı olduğunu
+  gösteriyor. Bu, bizim saf CfC politikasını savunurken kullanılacak en güçlü
+  temel referanstır.
+
+  \item \textbf{Dinamik mobil robot karşılığı var ama hibrit.} Ao ve ark. mobil
+  robot + dinamik insan ortamı için çok yakın bir problem çözüyor; fakat model
+  saf CfC değil ve eğitim imitation learning değil. Bu fark, bizim çalışmanın
+  daha sade ve izole edilmiş LNN/CfC katkısını belirginleştirir.
+
+  \item \textbf{LiDAR tarafında boşluk devam ediyor.} CALNet LiDAR ile LTC'yi
+  birleştirir; ancak bu bir kalibrasyon ağıdır. LiDAR/range vektöründen doğrudan
+  hız komutu üreten saf CfC mobil robot politikası literatürde bu dört çalışma
+  içinde görünmüyor.
+
+  \item \textbf{BC+DAgger konumlandırması makul.} Tanna ve ark. BC görevlerinde
+  LTC/CfC'nin kullanılabilirliğini destekler; Vorbach ve ark. ise imitation
+  learning ile navigasyonu destekler. Bizim DAgger eklememiz, kapalı çevrim
+  dağılım kaymasına karşı pratik bir güçlendirme olarak konumlandırılabilir.
+\end{enumerate}
+
+\section{Tez/Makale İçin Kullanılabilecek Konumlandırma}
+
+Bu çalışma, sürekli zamanlı nöral politikaların navigasyon için etkili
+olabileceğini gösteren drone + RGB literatüründen ayrılarak, düşük boyutlu
+LiDAR/range gözlemiyle diferansiyel sürüşlü mobil robot navigasyonuna odaklanır.
+Mevcut yakın çalışmalar ya görsel drone navigasyonu, ya sosyal mobil robot
+navigasyonu, ya LTC/CfC benchmarkları, ya da LiDAR-kamera kalibrasyonu
+çerçevesindedir. Bu nedenle çalışmanın katkısı, saf CfC politikanın MuJoCo
+ortamında statik ve dinamik haritalar üzerinde BC+DAgger ile eğitilip
+değerlendirilmesi olarak konumlandırılmalıdır.
+
+\begin{table}[H]
+\centering
+\caption{Çalışmanın literatürdeki boşluğa cevabı}
+\begin{tabularx}{\linewidth}{@{}p{0.24\linewidth}Y@{}}
+\toprule
+\textbf{Literatürde görülen durum} & \textbf{Bizim çalışmanın cevabı} \\
+\midrule
+LNN navigasyon çoğunlukla drone + RGB üzerinden gösterilmiş. &
+Mobil robot ve LiDAR/range vektörüyle aynı sürekli zamanlı politika ailesi test ediliyor. \\
+Mobil robot dinamik ortam çalışmaları genellikle sosyal/RL/graph tabanlı. &
+Saf CfC politika izole edilerek, ek graph/attention/safety filter olmadan deneniyor. \\
+LiDAR + LTC örnekleri algı/kalibrasyon tarafında kalıyor. &
+LiDAR doğrudan kontrol politikasının gözlemi olarak kullanılıyor. \\
+Kapalı çevrim dağılım kayması çoğu BC çalışmasında sorun. &
+BC sonrası DAgger ile modelin kendi rollout dağılımından veri toplanıyor. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Kaynakça}
+
+\begin{enumerate}
+  \item Ao, T., Li, H., Tian, Y., Fu, L., Leng, Y., Shi, H., Shi, L., \& Zhou, Y. (2026).
+  Human-Centric Motion Planning in Crowded Spaces: A Structured Neural Circuit
+  Approach with Social Interaction-Awareness. \emph{International Journal of
+  Social Robotics}, 18, 52. \url{https://doi.org/10.1007/s12369-026-01389-9}
+
+  \item Shang, H.-C., \& Hu, B.-J. (2022). CALNet: LiDAR-Camera Online
+  Calibration With Channel Attention and Liquid Time-Constant Network. In
+  \emph{2022 26th International Conference on Pattern Recognition (ICPR)},
+  5147--5154. \url{https://doi.org/10.1109/ICPR56361.2022.9956145}
+
+  \item Tanna, P. D., Khare, S., Jain, S. S., Vishnoi, S. R., Roy, S., \& Challa, J. S.
+  (2024). Optimizing Liquid Neural Networks: A comparative study of LTCs and CFCs.
+  In \emph{2024 IEEE International Conference on Big Data (BigData)}, 1470--1475.
+  \url{https://doi.org/10.1109/BigData62323.2024.10826128}
+
+  \item Vorbach, C., Hasani, R., Amini, A., Lechner, M., \& Rus, D. (2021).
+  Causal Navigation by Continuous-time Neural Networks. In \emph{Advances in
+  Neural Information Processing Systems 34}.
+\end{enumerate}
+
+\end{document}

@@ -32,6 +32,25 @@ Güncel haftalık rapor:
 - [LaTeX kaynağı](report/weekly_2026_05_11/weekly_report.tex)
 - [Haftalık metrik CSV](report/weekly_2026_05_11/weekly_metrics.csv)
 
+Benzer makaleler raporu:
+
+- [Benzer makaleler karşılaştırma raporu PDF](report/similar_papers_2026_05_11/build/similar_papers_report.pdf)
+- [LaTeX kaynağı](report/similar_papers_2026_05_11/similar_papers_report.tex)
+
+Bu rapor, indirilen dört yakın çalışmayı bizim MuJoCo + diferansiyel sürüşlü
+mobil robot + LiDAR/range + saf CfC + BC/DAgger yaklaşımımızla karşılaştırır.
+Sonuç olarak doğrudan aynı kombinasyonu kullanan bir çalışma bulunmadığını;
+Vorbach 2021'in yöntemsel, Ao 2026'nın platform/dinamik ortam, Tanna 2024'ün
+LTC/CfC karşılaştırma ve CALNet 2022'nin LiDAR+LTC tarafına yakın olduğunu
+özetler.
+
+İncelenen makale DOI'leri:
+
+- Vorbach et al. 2021, *Causal Navigation by Continuous-time Neural Networks*: `10.48550/arXiv.2106.08314`
+- Ao et al. 2026, *Human-Centric Motion Planning in Crowded Spaces*: `10.1007/s12369-026-01389-9`
+- Tanna et al. 2024, *Optimizing Liquid Neural Networks*: `10.1109/BigData62323.2024.10826128`
+- Shang & Hu 2022, *CALNet*: `10.1109/ICPR56361.2022.9956145`
+
 Ana proje raporu:
 
 - [Proje raporu PDF](report/build/main.pdf)
