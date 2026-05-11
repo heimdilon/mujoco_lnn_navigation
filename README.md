@@ -1,77 +1,114 @@
-# MuJoCo LNN/CfC Öğrenmeli Robot Navigasyonu
+# MuJoCo LNN/CfC Mobil Robot Navigasyonu
 
-**📄 [Proje Raporu (PDF)](report/build/main.pdf)**
-
-**Haftalık rapor:** [11 Mayıs 2026 haftalık raporu](report/weekly_2026_05_11/build/weekly_report.pdf)
-dinamik harita desteğini, saf `cfc_deep192` mimari değişikliğini ve 24 haritalık
-değerlendirmede elde edilen **21/24 başarı** sonucunu görsellerle özetler.
+Bu proje, diferansiyel sürüşlü bir mobil robotun MuJoCo ortamında 32 ışınlı
+LiDAR gözlemiyle statik ve dinamik engelli haritalarda hedefe ulaşmasını
+inceler. Ana yöntem saf LNN/CfC politikasıdır. Değerlendirme sırasında safety
+filter, otomatik waypoint veya kural tabanlı kontrol kullanılmaz; aksiyon
+doğrudan öğrenilmiş politikadan gelir.
 
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/heimdilon/mujoco_lnn_navigation/blob/master/notebooks/colab_custom22_training.ipynb)
 
-MuJoCo ortamında diferansiyel sürüşlü bir robotun 32 ışınlı LiDAR gözlemiyle
-engel içeren haritalarda hedefe ulaşması araştırılmıştır.
-Projenin hedefi LNN/CfC tabanlı politikayı GRU ve LSTM gibi klasik yinelemeli
-ağlarla aynı koşullar altında karşılaştırmaktır.
+## Güncel Durum
 
-## Colab ile Eğitim
+Son deneyde `cfc_deep192_custom22_dynamic_dagger2` modeli Colab üzerinde
+sıfırdan eğitildi ve 22 custom harita + 2 dinamik harita üzerinde test edildi.
 
-Custom22 CfC eğitimini Google Colab üzerinde çalıştırmak için
-[`notebooks/colab_custom22_training.ipynb`](notebooks/colab_custom22_training.ipynb)
-dosyasını aç veya yukarıdaki **Open in Colab** rozetini kullan.
+| Model | Mimari | Harita | Başarı | Çarpışma | Timeout |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `cfc_deep192_custom22_dynamic_dagger2` | `Linear+Tanh -> CfC -> CfC` | 24 | 21/24 | 3/24 | 0/24 |
 
-Colab'de `Runtime > Change runtime type > GPU` seçildikten sonra notebook sırasıyla
-repo kurulumunu, 22 haritalı BC eğitimini, 2 DAgger iterasyonunu ve train+holdout
-haritalarda saf politika değerlendirmesini çalıştırır. Lokal makinedeki `latest.pt`
-checkpoint'inden devam etmek istersen dosyayı Google Drive'a koyup notebook içindeki
-`RESUME_CHECKPOINT` alanına Drive yolunu yazman yeterli.
+Kırılım:
 
-Not: Colab rozeti GitHub'daki `master` branch'i açar; notebook ve custom22
-konfigürasyonlarının Colab'de görünmesi için değişikliklerin GitHub'a push edilmiş
-olması gerekir.
+| Küme | Harita | Başarı | Not |
+| --- | ---: | ---: | --- |
+| Custom train | 18 | 17/18 | `custom_map_16` çarpıştı |
+| Custom holdout | 4 | 3/4 | `custom_map_03` çarpıştı |
+| Dynamic train | 1 | 1/1 | `dynamic_open_single` başarılı |
+| Dynamic holdout | 1 | 0/1 | `dynamic_crossing` çarpıştı |
 
-### Saf Deep CfC/LNN deneyi
+Güncel haftalık rapor:
 
-Yeni Colab varsayılanı `cfc_deep192_custom22_dynamic_dagger2` run'ını çalıştırır.
-Bu model saf politika tarafında `obs -> Linear+Tanh -> CfC -> CfC -> actor/critic`
-yapısını kullanır; değerlendirmede safety filter, otomatik waypoint veya kural tabanlı
-kontrol eklenmez. Eğitim split'i 22 custom haritaya ek olarak
-`dynamic_open_single` haritasını train setine, `dynamic_crossing` haritasını holdout
-setine koyar ve sonunda 24 haritanın tamamını değerlendirir.
+- [11 Mayıs 2026 haftalık raporu PDF](report/weekly_2026_05_11/build/weekly_report.pdf)
+- [LaTeX kaynağı](report/weekly_2026_05_11/weekly_report.tex)
+- [Haftalık metrik CSV](report/weekly_2026_05_11/weekly_metrics.csv)
 
-## Sonuçlar
+Ana proje raporu:
 
-### Vize — GRU + BC/DAgger (2 harita)
+- [Proje raporu PDF](report/build/main.pdf)
 
-| Harita | Başarı | Çarpışma | Ort. Adım |
-| --- | ---: | ---: | ---: |
-| `custom_map_01` | 1.00 | 0.00 | 459 |
-| `custom_map_02` | 1.00 | 0.00 | 521 |
+## Saf Deep CfC/LNN Mimarisi
 
-### Final — CfC düzeltilmiş + DAgger (6 harita, max-steps = 900)
+Güncel model `cfc_deep` adıyla kayıtlıdır. Yapı:
 
-| Harita | GRU BC | CfC kırık | CfC düzeltilmiş |
-| --- | ---: | ---: | ---: |
-| `custom_map_01` | çarpışma | çarpışma | **%100 başarı** |
-| `custom_map_02` | çarpışma | çarpışma | timeout |
-| `custom_map_04` | çarpışma | çarpışma | timeout |
-| `custom_map_05` | çarpışma | çarpışma | timeout |
-| `custom_map_06` | çarpışma | çarpışma | timeout |
-| `custom_map_07` | çarpışma | timeout | **%100 başarı** |
+```text
+obs(38)
+  -> Linear(38, 192)
+  -> Tanh
+  -> CfC(hidden=192, dt=0.08)
+  -> CfC(hidden=192, dt=0.08)
+  -> actor: [linear, angular]
+  -> critic: value
+```
 
-Timeout: çarpışma olmadan 900 adım — robot engelleri atlıyor, hedef takibi henüz tam değil.
+Gözlem ve aksiyon sözleşmesi:
 
-### CfC Başarısızlığının Kök Nedenleri
+| Boyut | Açıklama |
+| ---: | --- |
+| 38 | Hedef mesafesi, hedef açısı, hız (2), önceki aksiyon (2), 32 LiDAR ışını |
+| 2 | Aksiyon: `[linear, angular]` ve her bileşen `[-1, 1]` aralığında |
 
-1. **Giriş kodlayıcısı eksikliği** — GRU'da `Linear(38,128)+Tanh` var, CfC'de yoktu.
-   Ham 38-d gözlem (farklı ölçekler) doğrudan ODE hücresine giriyordu.
-2. **Asimetrik eğitim bütçesi** — CfC 220 dönem / 12 demo, GRU 500 dönem / 24 demo.
-3. **Yanlış ODE zaman adımı** — `ncps` varsayılanı Δt = 1.0 s, gerçek kontrol adımı 0.08 s.
+Bu mimari saf LNN/CfC çizgisini korur. Eğitimde BC/DAgger için öğretmen
+trajektori üretimi yapılabilir, fakat değerlendirme anında politika kendi
+aksiyonunu üretir.
 
-Üç düzeltme + 2 DAgger iterasyonu: **%100 collision → 2/6 harita başarısı**.
+## Dinamik Haritalar
 
----
+Ortam artık `map.dynamic_obstacles` alanıyla hareketli engelleri destekler.
+Mevcut gözlem boyutu değişmedi; hareketli engeller LiDAR ışınlarına ve çarpışma
+kontrolüne dahil edilir.
 
-## Kurulum
+Eklenen dinamik haritalar:
+
+| Harita | Split | Açıklama |
+| --- | --- | --- |
+| `configs/maps/dynamic_open_single.yaml` | train | Açık alanda tek hareketli silindir |
+| `configs/maps/dynamic_crossing.yaml` | holdout | Koridor benzeri statik engeller + iki hareketli engel |
+
+Rollout PNG/GIF çıktıları hareketli engel izlerini de gösterir.
+
+## Colab ile Sıfırdan Eğitim
+
+Notebook:
+
+- [`notebooks/colab_custom22_training.ipynb`](notebooks/colab_custom22_training.ipynb)
+
+Colab üzerinde:
+
+1. `Runtime > Change runtime type > GPU` seç.
+2. Notebook'u üstten alta çalıştır.
+3. Sıfırdan eğitim için `RESUME_CHECKPOINT = ""` boş kalmalı.
+
+Varsayılan güncel ayarlar:
+
+```python
+RUN_NAME = "cfc_deep192_custom22_dynamic_dagger2"
+SPLIT_CONFIG = "configs/splits/custom22_dynamic_seed25462877008.yaml"
+TRAIN_CONFIG = "configs/train/bc_cfc_deep192_dynamic_maps.yaml"
+BC_EPOCHS_FROM_SCRATCH = 600
+DAGGER_ITERATIONS = 2
+```
+
+Eğitim sonunda beklenen checkpoint:
+
+```text
+results/cfc_deep192_custom22_dynamic_dagger2/latest.pt
+```
+
+Not: Büyük checkpoint dosyaları ve `results/` klasörü Git'e eklenmez.
+
+## Yerel Kurulum
+
+Windows PowerShell:
 
 ```powershell
 python -m venv .venv
@@ -80,94 +117,135 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
-Beklenen: testlerin tamamı geçmeli.
+Son doğrulamada testler:
 
----
+```text
+25 passed
+```
 
-## Yeniden Üretme
+## Güncel Modeli Değerlendirme
 
-### Vize baseline (GRU)
+Colab'da eğitilen checkpoint'i `results/cfc_deep192_custom22_dynamic_dagger2/latest.pt`
+konumuna koyduktan sonra tüm 24 haritada saf politika değerlendirmesi:
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\batch_evaluate.py ^
-  --map-configs configs\maps\custom_map_01.yaml configs\maps\custom_map_02.yaml ^
-  --checkpoint results\custom_maps_gru_bc_dagger\latest.pt ^
-  --episodes 4 --run-name vize_gru_eval --max-steps 900 --goal-observation-max 10
-```
-
-### CfC düzeltilmiş eğitimi
-
-```powershell
-.\.venv\Scripts\python.exe scripts\train_bc.py ^
-  --train-config configs\train\bc_cfc_augmented_maps.yaml ^
-  --split-config configs\splits\custom8_seed25462877008.yaml ^
-  --run-name cfc_fixed_bc --save-interval 50 --no-final-eval --device cuda
-```
-
-Ardından 2 DAgger iterasyonu:
-
-```powershell
-.\.venv\Scripts\python.exe scripts\train_bc.py ^
-  --train-config configs\train\bc_cfc_augmented_maps.yaml ^
-  --split-config configs\splits\custom8_seed25462877008.yaml ^
-  --run-name cfc_fixed_dagger ^
-  --resume results\cfc_fixed_bc\latest.pt ^
-  --dagger-iterations 2 --dagger-rollouts-per-map 4 ^
-  --dagger-epochs 80 --epochs 0 --no-final-eval --device cuda
-```
-
-### Değerlendirme
-
-```powershell
-.\.venv\Scripts\python.exe scripts\batch_evaluate.py ^
-  --map-configs configs\maps\custom_map_01.yaml configs\maps\custom_map_02.yaml ^
+  --map-configs ^
+    configs\maps\custom_map_01.yaml configs\maps\custom_map_02.yaml ^
     configs\maps\custom_map_04.yaml configs\maps\custom_map_05.yaml ^
     configs\maps\custom_map_06.yaml configs\maps\custom_map_07.yaml ^
-  --checkpoint results\cfc_fixed_dagger\latest.pt ^
-  --episodes 4 --run-name cfc_final_eval --max-steps 900 --device cuda
+    configs\maps\custom_map_09.yaml configs\maps\custom_map_10.yaml ^
+    configs\maps\custom_map_11.yaml configs\maps\custom_map_12.yaml ^
+    configs\maps\custom_map_13.yaml configs\maps\custom_map_14.yaml ^
+    configs\maps\custom_map_16.yaml configs\maps\custom_map_18.yaml ^
+    configs\maps\custom_map_19.yaml configs\maps\custom_map_20.yaml ^
+    configs\maps\custom_map_21.yaml configs\maps\custom_map_22.yaml ^
+    configs\maps\dynamic_open_single.yaml ^
+    configs\maps\custom_map_03.yaml configs\maps\custom_map_08.yaml ^
+    configs\maps\custom_map_15.yaml configs\maps\custom_map_17.yaml ^
+    configs\maps\dynamic_crossing.yaml ^
+  --checkpoint results\cfc_deep192_custom22_dynamic_dagger2\latest.pt ^
+  --episodes 4 ^
+  --run-name cfc_deep192_custom22_dynamic_dagger2_eval_all24_visual ^
+  --max-steps 900 ^
+  --goal-observation-max 10.0 ^
+  --device cpu
 ```
 
----
+Çıktılar:
 
-## Proje Sözleşmesi
-
-| Boyut | Açıklama |
-| ---: | --- |
-| 38 | Gözlem: hedef mesafesi, hedef açısı, hız (2), önceki aksiyon (2), 32 LiDAR ışını |
-| 2 | Aksiyon: `[linear, angular]` ∈ [-1, 1] |
-
----
-
-## Klasör Yapısı
-
-```
-configs/                 görev, eğitim ve harita YAML dosyaları
-scripts/                 eğitim, değerlendirme ve analiz scriptleri
-source/mujoco_lnn_nav/   MuJoCo ortamı, modeller, yardımcı modüller
-tests/                   birim ve smoke testler
-report/                  LaTeX rapor ve PDF
+```text
+results/cfc_deep192_custom22_dynamic_dagger2_eval_all24_visual/summary.csv
+results/cfc_deep192_custom22_dynamic_dagger2_eval_all24_visual/*/rollout.png
+results/cfc_deep192_custom22_dynamic_dagger2_eval_all24_visual/*/rollout.gif
 ```
 
-## Araçlar
+## Eğitim Komutları
 
-**Harita editörü:**
+BC eğitimi:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\train_bc.py ^
+  --split-config configs\splits\custom22_dynamic_seed25462877008.yaml ^
+  --train-config configs\train\bc_cfc_deep192_dynamic_maps.yaml ^
+  --run-name cfc_deep192_custom22_dynamic_dagger2 ^
+  --epochs 600 ^
+  --save-interval 50 ^
+  --no-final-eval ^
+  --device cuda
+```
+
+DAgger devam eğitimi:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\train_bc.py ^
+  --split-config configs\splits\custom22_dynamic_seed25462877008.yaml ^
+  --train-config configs\train\bc_cfc_deep192_dynamic_maps.yaml ^
+  --run-name cfc_deep192_custom22_dynamic_dagger2 ^
+  --resume results\cfc_deep192_custom22_dynamic_dagger2\latest.pt ^
+  --epochs 0 ^
+  --dagger-iterations 2 ^
+  --dagger-rollouts-per-map 4 ^
+  --dagger-epochs 80 ^
+  --save-interval 50 ^
+  --no-final-eval ^
+  --device cuda
+```
+
+## Eski Deneylerden Kısa Tarihçe
+
+Önceki tek katmanlı CfC modeli `cfc_radius010_custom22_dagger2`, 24 haritalık
+testte 10/24 başarı üretmişti. Yeni iki katmanlı `cfc_deep192` yapısı aynı test
+yüzeyinde 21/24 başarıya çıktı. Kalan hata modu timeout değil, belirli
+haritalarda çarpışmadır.
+
+Başarısız güncel haritalar:
+
+- `custom_map_16`
+- `custom_map_03`
+- `dynamic_crossing`
+
+Bu nedenle sonraki çalışma, saf LNN yapısını bozmadan çarpışma davranışını
+azaltmaya odaklanmalıdır.
+
+## Faydalı Araçlar
+
+Harita editörü:
+
 ```powershell
 .\.venv\Scripts\python.exe scripts\map_editor.py --port 8765
 ```
 
-**Model karşılaştırması:**
+Politika karşılaştırması:
+
 ```powershell
 .\.venv\Scripts\python.exe scripts\compare_policies.py ^
   --map-configs configs\maps\custom_map_01.yaml configs\maps\custom_map_02.yaml ^
-  --policies mlp cfc cfc_deep gru lstm --epochs 60 --episodes 4 --max-steps 900
+  --policies mlp cfc cfc_deep gru lstm ^
+  --epochs 60 ^
+  --episodes 4 ^
+  --max-steps 900
 ```
 
-**Raporu yeniden derlemek için:**
+Haftalık raporu Tectonic ile yeniden derleme:
+
 ```powershell
-pdflatex -interaction=nonstopmode -output-directory=report\build report\main.tex
-pdflatex -interaction=nonstopmode -output-directory=report\build report\main.tex
+tectonic --outdir report\weekly_2026_05_11\build report\weekly_2026_05_11\weekly_report.tex
 ```
 
----
+## Klasör Yapısı
 
-> Büyük checkpoint dosyaları (`.pt`) ve `results/` klasörü `.gitignore` ile dışarıda bırakılmıştır.
+```text
+configs/                 Eğitim, split ve harita YAML dosyaları
+notebooks/               Colab eğitim notebook'u
+scripts/                 Eğitim, değerlendirme, harita editörü ve analiz scriptleri
+source/mujoco_lnn_nav/   Ortam, model, eğitim ve yardımcı modüller
+tests/                   Birim ve smoke testler
+report/                  Ana rapor, haftalık raporlar ve PDF çıktıları
+```
+
+## Notlar
+
+- `results/` ve büyük `.pt` checkpoint dosyaları `.gitignore` ile dışarıda tutulur.
+- GitHub'daki Colab rozeti `master` branch'ini açar.
+- Güncel notebook sıfırdan `cfc_deep192_custom22_dynamic_dagger2` deneyini çalıştıracak şekilde ayarlanmıştır.
