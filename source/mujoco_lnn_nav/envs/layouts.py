@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import cos, sin
-from typing import Iterable
+from typing import Any, Iterable
 
 import numpy as np
 
@@ -45,7 +45,9 @@ def obstacle_count(config: dict, rng: np.random.Generator) -> int:
 
 def max_obstacles(config: dict) -> int:
     configured_max = int(config["obstacles"].get("count", [0, 0])[1])
-    return max(configured_max, len(config.get("map", {}).get("obstacles", [])))
+    map_cfg = config.get("map", {})
+    fixed_count = len(map_cfg.get("obstacles", [])) + len(map_cfg.get("dynamic_obstacles", []))
+    return max(configured_max, fixed_count)
 
 
 def has_fixed_map(config: dict) -> bool:
@@ -53,9 +55,22 @@ def has_fixed_map(config: dict) -> bool:
     return isinstance(map_cfg, dict) and bool(map_cfg.get("enabled", True)) and "start" in map_cfg and "goal" in map_cfg
 
 
+def _map_obstacle_items(config: dict) -> list[dict[str, Any]]:
+    map_cfg = config.get("map", {}) or {}
+    return [*map_cfg.get("obstacles", []), *map_cfg.get("dynamic_obstacles", [])]
+
+
+def fixed_obstacle_motions(config: dict) -> list[dict[str, Any]]:
+    motions: list[dict[str, Any]] = []
+    for item in _map_obstacle_items(config):
+        motion = item.get("motion", {}) or {}
+        motions.append(motion if isinstance(motion, dict) else {})
+    return motions
+
+
 def fixed_obstacles(config: dict) -> list[ObstacleSpec]:
     obstacles: list[ObstacleSpec] = []
-    for item in config.get("map", {}).get("obstacles", []):
+    for item in _map_obstacle_items(config):
         shape = str(item.get("shape", "cylinder"))
         x = float(item["x"])
         y = float(item["y"])

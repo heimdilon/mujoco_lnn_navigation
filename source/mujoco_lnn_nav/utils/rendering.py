@@ -21,11 +21,30 @@ def _world_to_px_factory(config: dict, size: int, margin: int):
     return world_to_px
 
 
-def _draw_static_map(draw: ImageDraw.ImageDraw, config: dict, episode: dict, size: int, margin: int) -> None:
+def _obstacle_dicts_at(episode: dict, frame_index: int | None = None) -> list[dict]:
+    obstacles = [dict(obs) for obs in episode.get("obstacles", [])]
+    paths = episode.get("obstacle_paths", [])
+    for idx, path in enumerate(paths):
+        if idx >= len(obstacles) or not path:
+            continue
+        source_index = len(path) - 1 if frame_index is None else min(frame_index, len(path) - 1)
+        position = path[source_index]
+        obstacles[idx]["x"] = float(position[0])
+        obstacles[idx]["y"] = float(position[1])
+    return obstacles
+
+
+def _draw_static_map(draw: ImageDraw.ImageDraw, config: dict, episode: dict, size: int, margin: int, frame_index: int | None = None) -> None:
     arena_half = float(config["arena"]["half_size"])
     world_to_px = _world_to_px_factory(config, size, margin)
     draw.rectangle([margin, margin, size - margin, size - margin], outline=(70, 76, 82), width=2)
-    for obs in episode.get("obstacles", []):
+    for path in episode.get("obstacle_paths", []):
+        if len(path) > 1:
+            last_index = len(path) - 1 if frame_index is None else min(frame_index, len(path) - 1)
+            trail = [world_to_px(point) for point in path[: last_index + 1]]
+            if len(trail) > 1:
+                draw.line(trail, fill=(116, 119, 124), width=2)
+    for obs in _obstacle_dicts_at(episode, frame_index):
         cx, cy = world_to_px((obs["x"], obs["y"]))
         if obs["shape"] == "box":
             yaw = float(obs.get("yaw", 0.0))
@@ -52,9 +71,9 @@ def _draw_static_map(draw: ImageDraw.ImageDraw, config: dict, episode: dict, siz
         draw.ellipse([wx - 5, wy - 5, wx + 5, wy + 5], fill=(88, 129, 220), outline=(39, 75, 160))
 
 
-def _episode_obstacles(episode: dict) -> list[ObstacleSpec]:
+def _episode_obstacles(episode: dict, frame_index: int | None = None) -> list[ObstacleSpec]:
     obstacles = []
-    for obs in episode.get("obstacles", []):
+    for obs in _obstacle_dicts_at(episode, frame_index):
         obstacles.append(
             ObstacleSpec(
                 str(obs["shape"]),
@@ -81,14 +100,23 @@ def _yaw_at(episode: dict, index: int) -> float:
     return float(atan2(float(other[1]) - float(current[1]), float(other[0]) - float(current[0])))
 
 
-def _draw_lidar(image: Image.Image, config: dict, episode: dict, point: list[float] | tuple[float, float], yaw: float, size: int, margin: int) -> Image.Image:
+def _draw_lidar(
+    image: Image.Image,
+    config: dict,
+    episode: dict,
+    point: list[float] | tuple[float, float],
+    yaw: float,
+    size: int,
+    margin: int,
+    frame_index: int | None = None,
+) -> Image.Image:
     num_rays = int(config["sensors"]["rays"])
     max_range = float(config["sensors"]["max_range"])
     arena_half = float(config["arena"]["half_size"])
     ranges = cast_rays(
         origin=np.array([float(point[0]), float(point[1])], dtype=np.float32),
         yaw=yaw,
-        obstacles=_episode_obstacles(episode),
+        obstacles=_episode_obstacles(episode, frame_index),
         num_rays=num_rays,
         max_range=max_range,
         arena_half=arena_half,
@@ -117,11 +145,12 @@ def render_rollout_png(config: dict, episode: dict, path: Path, size: int = 900)
     image = Image.new("RGBA", (size, size), (246, 247, 244, 255))
     draw = ImageDraw.Draw(image)
     world_to_px = _world_to_px_factory(config, size, margin)
-    _draw_static_map(draw, config, episode, size, margin)
 
     raw_path = episode.get("path", [])
+    final_index = len(raw_path) - 1 if raw_path else None
+    _draw_static_map(draw, config, episode, size, margin, final_index)
     if raw_path:
-        image = _draw_lidar(image, config, episode, raw_path[-1], _yaw_at(episode, len(raw_path) - 1), size, margin)
+        image = _draw_lidar(image, config, episode, raw_path[-1], _yaw_at(episode, len(raw_path) - 1), size, margin, final_index)
         draw = ImageDraw.Draw(image)
 
     path_points = [world_to_px(point) for point in episode.get("path", [])]
@@ -166,9 +195,9 @@ def render_rollout_gif(
     for idx in range(len(points)):
         image = Image.new("RGBA", (size, size), (246, 247, 244, 255))
         draw = ImageDraw.Draw(image)
-        _draw_static_map(draw, config, episode, size, margin)
         source_index = min(idx * stride, len(raw_path) - 1)
-        image = _draw_lidar(image, config, episode, points[idx], _yaw_at(episode, source_index), size, margin)
+        _draw_static_map(draw, config, episode, size, margin, source_index)
+        image = _draw_lidar(image, config, episode, points[idx], _yaw_at(episode, source_index), size, margin, source_index)
         draw = ImageDraw.Draw(image)
         trail = [world_to_px(point) for point in points[: idx + 1]]
         if len(trail) > 1:

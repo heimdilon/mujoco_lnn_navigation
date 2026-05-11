@@ -1,0 +1,34 @@
+name: custom22_dynamic_seed25462877008
+seed: 25462877008
+description: Twenty-two manually drawn maps plus two dynamic obstacle maps; one dynamic map is held out for stress testing.
+train_maps:
+- configs/maps/custom_map_01.yaml
+- configs/maps/custom_map_02.yaml
+- configs/maps/custom_map_04.yaml
+- configs/maps/custom_map_05.yaml
+- configs/maps/custom_map_06.yaml
+- configs/maps/custom_map_07.yaml
+- configs/maps/custom_map_09.yaml
+- configs/maps/custom_map_10.yaml
+- configs/maps/custom_map_11.yaml
+- configs/maps/custom_map_12.yaml
+- configs/maps/custom_map_13.yaml
+- configs/maps/custom_map_14.yaml
+- configs/maps/custom_map_16.yaml
+- configs/maps/custom_map_18.yaml
+- configs/maps/custom_map_19.yaml
+- configs/maps/custom_map_20.yaml
+- configs/maps/custom_map_21.yaml
+- configs/maps/custom_map_22.yaml
+- configs/maps/dynamic_open_single.yaml
+holdout_maps:
+- configs/maps/custom_map_03.yaml
+- configs/maps/custom_map_08.yaml
+- configs/maps/custom_map_15.yaml
+- configs/maps/custom_map_17.yaml
+- configs/maps/dynamic_crossing.yaml
+notes:
+- Holdout maps are not used during BC/DAgger training.
+- dynamic_open_single is used during training; dynamic_crossing is kept as dynamic holdout.
+- Pure policy evaluation must leave auto-waypoints disabled.
+- Map YAMLs are normalized for robot.radius=0.1, max_steps=900, goal.observation_max_distance=10.0, and obstacles.min_clearance=0.5.

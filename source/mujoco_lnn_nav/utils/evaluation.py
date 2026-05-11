@@ -82,6 +82,7 @@ def evaluate_policy(
                     "yaws": list(env.envs[idx].last_yaws),
                     "distances": list(env.envs[idx].last_distances),
                     "obstacles": [obs_spec.__dict__ for obs_spec in env.envs[idx].obstacles],
+                    "obstacle_paths": list(env.envs[idx].last_obstacle_paths),
                     "goal": getattr(env.envs[idx], "final_goal", env.envs[idx].goal).astype(float).tolist(),
                     "waypoints": [point.astype(float).tolist() for point in getattr(env.envs[idx], "waypoints", [])],
                 }

@@ -25,6 +25,15 @@ Not: Colab rozeti GitHub'daki `master` branch'i açar; notebook ve custom22
 konfigürasyonlarının Colab'de görünmesi için değişikliklerin GitHub'a push edilmiş
 olması gerekir.
 
+### Saf Deep CfC/LNN deneyi
+
+Yeni Colab varsayılanı `cfc_deep192_custom22_dynamic_dagger2` run'ını çalıştırır.
+Bu model saf politika tarafında `obs -> Linear+Tanh -> CfC -> CfC -> actor/critic`
+yapısını kullanır; değerlendirmede safety filter, otomatik waypoint veya kural tabanlı
+kontrol eklenmez. Eğitim split'i 22 custom haritaya ek olarak
+`dynamic_open_single` haritasını train setine, `dynamic_crossing` haritasını holdout
+setine koyar ve sonunda 24 haritanın tamamını değerlendirir.
+
 ## Sonuçlar
 
 ### Vize — GRU + BC/DAgger (2 harita)
@@ -67,7 +76,7 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
-Beklenen: `21 passed`
+Beklenen: testlerin tamamı geçmeli.
 
 ---
 
@@ -146,7 +155,7 @@ report/                  LaTeX rapor ve PDF
 ```powershell
 .\.venv\Scripts\python.exe scripts\compare_policies.py ^
   --map-configs configs\maps\custom_map_01.yaml configs\maps\custom_map_02.yaml ^
-  --policies mlp cfc gru lstm --epochs 60 --episodes 4 --max-steps 900
+  --policies mlp cfc cfc_deep gru lstm --epochs 60 --episodes 4 --max-steps 900
 ```
 
 **Raporu yeniden derlemek için:**

@@ -44,3 +44,34 @@ def test_rotated_wall_blocks_points_along_its_axis():
     wall = fixed_obstacles(cfg)[0]
     assert not is_free(np.array([0.25, 0.25], dtype=np.float32), [wall], cfg)
     assert is_free(np.array([0.25, -0.25], dtype=np.float32), [wall], cfg)
+
+
+def test_dynamic_obstacle_motion_updates_obstacle_state_and_history():
+    cfg = load_task_config("configs/task/sparse_goal.yaml")
+    cfg["map"] = {
+        "enabled": True,
+        "name": "dynamic_unit_map",
+        "start": [-1.5, -1.5, 0.0],
+        "goal": [1.5, 1.5],
+        "obstacles": [],
+        "dynamic_obstacles": [
+            {
+                "id": "moving",
+                "shape": "cylinder",
+                "x": 0.0,
+                "y": 0.0,
+                "radius": 0.2,
+                "motion": {"type": "line", "axis": [1.0, 0.0], "amplitude": 0.5, "period": 4.0},
+            }
+        ],
+    }
+    env = MujocoNavigationEnv(cfg, num_envs=1, seed=1, auto_reset=False)
+    env.reset()
+    single = env.envs[0]
+    assert np.allclose(single.obstacles[0].center, [0.0, 0.0], atol=1e-6)
+
+    env.step(np.zeros((1, 2), dtype=np.float32))
+
+    expected_x = 0.5 * np.sin(2.0 * np.pi * single.time / 4.0)
+    assert np.isclose(single.obstacles[0].x, expected_x, atol=1e-6)
+    assert len(single.last_obstacle_paths[0]) == 2

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from math import cos, sin
 from typing import Any
 
@@ -11,6 +11,7 @@ import torch
 from mujoco_lnn_nav.envs.layouts import (
     ObstacleSpec,
     box_signed_distance,
+    fixed_obstacle_motions,
     fixed_obstacles,
     fixed_start_goal,
     has_fixed_map,
@@ -46,7 +47,9 @@ class _SingleMujocoNavigationEnv:
         self.max_obstacles = max_obstacles(config)
         self.model = mujoco.MjModel.from_xml_string(build_navigation_xml(config, self.max_obstacles))
         self.data = mujoco.MjData(self.model)
+        self.base_obstacles: list[ObstacleSpec] = []
         self.obstacles: list[ObstacleSpec] = []
+        self.obstacle_motions: list[dict[str, Any]] = []
         self.goal = np.zeros(2, dtype=np.float32)
         self.final_goal = np.zeros(2, dtype=np.float32)
         self.waypoints: list[np.ndarray] = []
@@ -54,9 +57,11 @@ class _SingleMujocoNavigationEnv:
         self.prev_action = np.zeros(2, dtype=np.float32)
         self.prev_distance = 0.0
         self.step_count = 0
+        self.time = 0.0
         self.last_path: list[tuple[float, float]] = []
         self.last_yaws: list[float] = []
         self.last_distances: list[float] = []
+        self.last_obstacle_paths: list[list[tuple[float, float]]] = []
         self.reset()
 
     @property
@@ -77,11 +82,15 @@ class _SingleMujocoNavigationEnv:
 
     def reset(self) -> np.ndarray:
         if has_fixed_map(self.config):
-            self.obstacles = fixed_obstacles(self.config)
+            self.base_obstacles = fixed_obstacles(self.config)
+            self.obstacle_motions = fixed_obstacle_motions(self.config)
             start, goal, yaw = fixed_start_goal(self.config, self.rng)
         else:
-            self.obstacles = random_obstacles(self.config, self.rng)
-            start, goal, yaw = sample_start_goal(self.obstacles, self.config, self.rng)
+            self.base_obstacles = random_obstacles(self.config, self.rng)
+            self.obstacle_motions = [{} for _ in self.base_obstacles]
+            start, goal, yaw = sample_start_goal(self.base_obstacles, self.config, self.rng)
+        self.time = 0.0
+        self._update_dynamic_obstacles()
         self.final_goal = goal.copy()
         self.waypoints = [np.array(point, dtype=np.float32) for point in self.config.get("map", {}).get("waypoints", [])]
         if self.waypoints:
@@ -106,7 +115,40 @@ class _SingleMujocoNavigationEnv:
         self.last_path = [(float(start[0]), float(start[1]))]
         self.last_yaws = [float(self.yaw)]
         self.last_distances = [float(self.prev_distance)]
+        self.last_obstacle_paths = [[(float(obs.x), float(obs.y))] for obs in self.obstacles]
         return self.observation()
+
+    def _control_dt(self) -> float:
+        return float(self.config.get("physics_dt", 0.02)) * float(self.config.get("frame_skip", 4))
+
+    def _moved_obstacle(self, obs: ObstacleSpec, motion: dict[str, Any]) -> ObstacleSpec:
+        if not motion or not bool(motion.get("enabled", True)):
+            return obs
+        motion_type = str(motion.get("type", "line"))
+        if motion_type == "line":
+            axis = np.asarray(motion.get("axis", [1.0, 0.0]), dtype=np.float32)
+            norm = float(np.linalg.norm(axis))
+            if norm < 1e-6:
+                return obs
+            axis = axis / norm
+            amplitude = float(motion.get("amplitude", 0.0))
+            period = max(float(motion.get("period", 1.0)), 1e-6)
+            phase = float(motion.get("phase", 0.0))
+            offset = axis * (amplitude * np.sin(2.0 * np.pi * self.time / period + phase))
+            return replace(obs, x=float(obs.x + offset[0]), y=float(obs.y + offset[1]))
+        if motion_type == "circle":
+            radius = float(motion.get("radius", motion.get("amplitude", 0.0)))
+            period = max(float(motion.get("period", 1.0)), 1e-6)
+            phase = float(motion.get("phase", 0.0))
+            angle = 2.0 * np.pi * self.time / period + phase
+            return replace(obs, x=float(obs.x + radius * np.cos(angle)), y=float(obs.y + radius * np.sin(angle)))
+        return obs
+
+    def _update_dynamic_obstacles(self) -> None:
+        motions = self.obstacle_motions
+        if len(motions) < len(self.base_obstacles):
+            motions = [*motions, *({} for _ in range(len(self.base_obstacles) - len(motions)))]
+        self.obstacles = [self._moved_obstacle(obs, motions[idx]) for idx, obs in enumerate(self.base_obstacles)]
 
     def _geom_id(self, name: str) -> int:
         return mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, name)
@@ -223,6 +265,10 @@ class _SingleMujocoNavigationEnv:
             mujoco.mj_step(self.model, self.data)
         self.data.qpos[2] = float(wrap_angle(float(self.data.qpos[2])))
         self.step_count += 1
+        self.time += self._control_dt()
+        self._update_dynamic_obstacles()
+        self._apply_obstacle_geoms()
+        mujoco.mj_forward(self.model, self.data)
 
         distance = self.goal_distance()
         progress = self.prev_distance - distance
@@ -271,6 +317,8 @@ class _SingleMujocoNavigationEnv:
         self.last_path.append((float(self.position[0]), float(self.position[1])))
         self.last_yaws.append(float(self.yaw))
         self.last_distances.append(float(distance))
+        for obstacle_path, obstacle in zip(self.last_obstacle_paths, self.obstacles):
+            obstacle_path.append((float(obstacle.x), float(obstacle.y)))
         info = {
             "success": success,
             "collision": collision,

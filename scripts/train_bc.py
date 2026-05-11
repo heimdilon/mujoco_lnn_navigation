@@ -28,7 +28,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--train-config", required=True)
     parser.add_argument("--run-name", required=True)
     parser.add_argument("--resume", default=None)
-    parser.add_argument("--policy", choices=["mlp", "cfc", "lnn", "gru", "lstm"], default=None)
+    parser.add_argument("--policy", choices=["mlp", "cfc", "lnn", "cfc_deep", "lnn_deep", "deep_lnn", "gru", "lstm"], default=None)
     parser.add_argument("--hidden-size", type=int, default=None)
     parser.add_argument("--learning-rate", type=float, default=None)
     parser.add_argument("--epochs", type=int, default=None)

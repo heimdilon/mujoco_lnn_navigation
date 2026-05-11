@@ -16,7 +16,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--map-configs", nargs="+", required=True)
     parser.add_argument("--train-config", default=str(ROOT / "configs" / "train" / "bc_gru_manual_maps.yaml"))
     parser.add_argument("--run-name", required=True)
-    parser.add_argument("--policies", nargs="+", default=["mlp", "cfc", "gru", "lstm"], choices=["mlp", "cfc", "gru", "lstm"])
+    parser.add_argument(
+        "--policies",
+        nargs="+",
+        default=["mlp", "cfc", "gru", "lstm"],
+        choices=["mlp", "cfc", "cfc_deep", "gru", "lstm"],
+    )
     parser.add_argument("--epochs", type=int, default=120)
     parser.add_argument("--dagger-iterations", type=int, default=2)
     parser.add_argument("--dagger-rollouts-per-map", type=int, default=2)
