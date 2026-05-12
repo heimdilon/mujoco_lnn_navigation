@@ -20,6 +20,10 @@ from mujoco_lnn_nav.utils.planning import with_auto_waypoints
 from mujoco_lnn_nav.utils.rendering import render_rollout_gif, render_rollout_png
 
 
+def log_progress(message: str) -> None:
+    print(message, flush=True)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--map-configs", nargs="*", default=None)
@@ -59,6 +63,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dagger-epochs", type=int, default=40)
     parser.add_argument("--dagger-noise", type=float, default=0.06)
     parser.add_argument("--dagger-expert-mix", type=float, default=0.20)
+    parser.add_argument("--log-interval", type=int, default=10, help="Print training loss every N epochs; 0 disables epoch logs.")
     parser.add_argument("--no-final-eval", action="store_true")
     parser.add_argument("--device", default="cpu")
     return parser.parse_args()
@@ -119,9 +124,15 @@ def collect_sequences(map_paths: list[str], train_cfg: dict, device: torch.devic
     obs_sequences: list[torch.Tensor] = []
     action_sequences: list[torch.Tensor] = []
     metadata: list[dict] = []
-    for map_path in map_paths:
+    episodes_per_map = int(train_cfg.get("episodes_per_map", 4))
+    log_progress(f"[teacher] collecting A* teacher sequences maps={len(map_paths)} episodes_per_map={episodes_per_map}")
+    for map_index, map_path in enumerate(map_paths, start=1):
         teacher_cfg = prepare_teacher_config(map_path, train_cfg)
-        for episode_idx in range(int(train_cfg.get("episodes_per_map", 4))):
+        map_name = str(teacher_cfg["name"])
+        map_meta_start = len(metadata)
+        map_seq_start = len(obs_sequences)
+        log_progress(f"[teacher] map {map_index}/{len(map_paths)} {map_name} start")
+        for episode_idx in range(episodes_per_map):
             env = MujocoNavigationEnv(teacher_cfg, num_envs=1, device=device, seed=100 + episode_idx, auto_reset=False)
             env.reset()
             obs_list: list[np.ndarray] = []
@@ -152,8 +163,17 @@ def collect_sequences(map_paths: list[str], train_cfg: dict, device: torch.devic
                 continue
             obs_sequences.append(torch.as_tensor(np.stack(obs_list), dtype=torch.float32, device=device))
             action_sequences.append(torch.as_tensor(np.stack(action_list), dtype=torch.float32, device=device))
+        map_rows = metadata[map_meta_start:]
+        successes = sum(1 for row in map_rows if row["success"])
+        accepted = len(obs_sequences) - map_seq_start
+        mean_steps = float(np.mean([row["steps"] for row in map_rows])) if map_rows else 0.0
+        log_progress(
+            f"[teacher] map {map_index}/{len(map_paths)} {map_name} done "
+            f"success={successes}/{len(map_rows)} accepted={accepted} mean_steps={mean_steps:.1f}"
+        )
     if not obs_sequences:
         raise RuntimeError("No successful teacher sequences were collected; cannot run behavioral cloning.")
+    log_progress(f"[teacher] collected sequences={len(obs_sequences)} episodes={len(metadata)}")
     return obs_sequences, action_sequences, metadata
 
 
@@ -187,7 +207,11 @@ def collect_dagger_sequences(
     obs_sequences: list[torch.Tensor] = []
     action_sequences: list[torch.Tensor] = []
     metadata: list[dict] = []
-    for map_path in map_paths:
+    log_progress(
+        f"[dagger] collecting rollouts maps={len(map_paths)} rollouts_per_map={rollouts_per_map} "
+        f"noise={noise_std:.3f} expert_mix={expert_mix:.2f}"
+    )
+    for map_index, map_path in enumerate(map_paths, start=1):
         teacher_cfg = prepare_teacher_config(map_path, train_cfg)
         pure_cfg = load_task_config(map_path)
         pure_cfg["episode"]["max_steps"] = int(train_cfg.get("max_steps", 900))
@@ -196,6 +220,10 @@ def collect_dagger_sequences(
         if not waypoints:
             waypoints = [np.array(pure_cfg["map"]["goal"], dtype=np.float32)]
         waypoint_radius = float(teacher_cfg.get("map", {}).get("waypoint_radius", 0.30))
+        map_name = str(pure_cfg["name"])
+        map_meta_start = len(metadata)
+        map_seq_start = len(obs_sequences)
+        log_progress(f"[dagger] map {map_index}/{len(map_paths)} {map_name} start")
 
         for episode_idx in range(rollouts_per_map):
             rng = np.random.default_rng(seed_offset + episode_idx)
@@ -236,6 +264,17 @@ def collect_dagger_sequences(
                     "timeout": bool(final_info and final_info["timeout"]),
                 }
             )
+        map_rows = metadata[map_meta_start:]
+        successes = sum(1 for row in map_rows if row["success"])
+        collisions = sum(1 for row in map_rows if row["collision"])
+        accepted = len(obs_sequences) - map_seq_start
+        mean_steps = float(np.mean([row["steps"] for row in map_rows])) if map_rows else 0.0
+        log_progress(
+            f"[dagger] map {map_index}/{len(map_paths)} {map_name} done "
+            f"rollouts={len(map_rows)} success={successes} collision={collisions} "
+            f"accepted={accepted} mean_steps={mean_steps:.1f}"
+        )
+    log_progress(f"[dagger] collected sequences={len(obs_sequences)} rollouts={len(metadata)}")
     return obs_sequences, action_sequences, metadata
 
 
@@ -387,12 +426,18 @@ def train_epochs(
     start_epoch: int,
     save_interval: int,
     label: str,
+    log_interval: int,
 ) -> list[dict]:
     history: list[dict] = []
+    batch_size = max(1, int(train_cfg.get("batch_sequences", 1)))
+    log_progress(
+        f"[{label}] training start epochs={epochs} start_epoch={start_epoch} "
+        f"sequences={len(obs_sequences)} batch_sequences={batch_size} "
+        f"bucket_by_length={bool(train_cfg.get('bucket_by_length', False))}"
+    )
     pbar = tqdm(range(epochs), desc=label)
     for local_epoch in pbar:
         losses = []
-        batch_size = max(1, int(train_cfg.get("batch_sequences", 1)))
         batches = make_epoch_batches(
             obs_sequences,
             batch_size,
@@ -414,8 +459,22 @@ def train_epochs(
         row = {"epoch": epoch, "loss": float(np.mean(losses))}
         history.append(row)
         pbar.set_postfix(loss=f"{row['loss']:.5f}", sequences=len(obs_sequences))
+        should_log = (
+            log_interval > 0
+            and (local_epoch == 0 or (local_epoch + 1) % log_interval == 0 or local_epoch + 1 == epochs)
+        )
+        if should_log:
+            log_progress(
+                f"[{label}] epoch {local_epoch + 1}/{epochs} global_epoch={epoch} "
+                f"loss={row['loss']:.5f} sequences={len(obs_sequences)} batches={len(batches)}"
+            )
         if save_interval > 0 and epoch % save_interval == 0:
             save_checkpoint(model, optimizer, run_dir, epoch, policy_name, hidden_size, model_kwargs)
+            log_progress(f"[checkpoint] saved latest.pt global_epoch={epoch}")
+    if epochs == 0:
+        log_progress(f"[{label}] skipped epochs=0")
+    else:
+        log_progress(f"[{label}] training done final_epoch={start_epoch + epochs} final_loss={history[-1]['loss']:.5f}")
     return history
 
 
@@ -438,32 +497,50 @@ def main() -> None:
     device = torch.device(args.device)
     run_dir = ROOT / "results" / args.run_name
     run_dir.mkdir(parents=True, exist_ok=True)
+    log_progress(f"[run] name={args.run_name}")
+    log_progress(f"[run] train_config={args.train_config}")
+    log_progress(f"[run] maps={len(map_configs)} device={device} output={run_dir}")
+    log_progress(
+        f"[run] epochs={train_cfg.get('epochs', 500)} dagger_iterations={args.dagger_iterations} "
+        f"dagger_epochs={args.dagger_epochs} batch_sequences={train_cfg.get('batch_sequences', 1)}"
+    )
 
     obs_sequences, action_sequences, metadata = collect_sequences(map_configs, train_cfg, device)
     with (run_dir / "teacher_sequences.csv").open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=["map", "steps", "success", "collision", "timeout"])
         writer.writeheader()
         writer.writerows(metadata)
+    log_progress(f"[teacher] metadata saved {run_dir / 'teacher_sequences.csv'}")
 
     policy_name = str(train_cfg.get("policy", "gru"))
     hidden_size = int(train_cfg.get("hidden_size", 128))
     model_kwargs = dict(train_cfg.get("model_kwargs") or {})
     model = build_actor_critic(policy_name, 38, 2, hidden_size, **model_kwargs).to(device)
+    n_params = sum(param.numel() for param in model.parameters())
+    log_progress(
+        f"[model] policy={policy_name} impl={getattr(model, 'policy_impl', policy_name)} "
+        f"hidden_size={hidden_size} params={n_params} model_kwargs={model_kwargs}"
+    )
     optimizer_state = None
     resume_epoch = 0
     if args.resume:
+        log_progress(f"[resume] loading {args.resume}")
         checkpoint = torch.load(args.resume, map_location=device)
         if checkpoint.get("policy", policy_name) != policy_name:
             raise ValueError(f"Checkpoint policy {checkpoint.get('policy')} does not match config policy {policy_name}.")
         model.load_state_dict(checkpoint["model_state"])
         optimizer_state = checkpoint.get("optimizer_state")
         resume_epoch = int(checkpoint.get("step", 0) or 0)
+        log_progress(f"[resume] loaded step={resume_epoch}")
 
     optimizer = torch.optim.Adam(model.parameters(), lr=float(train_cfg.get("learning_rate", 5e-4)))
+    log_progress(f"[optimizer] Adam lr={float(train_cfg.get('learning_rate', 5e-4))}")
     if optimizer_state is not None:
         try:
             optimizer.load_state_dict(optimizer_state)
+            log_progress("[optimizer] restored state")
         except ValueError:
+            log_progress("[optimizer] checkpoint optimizer state incompatible; using fresh optimizer")
             pass
 
     requested_epochs = int(train_cfg.get("epochs", 500))
@@ -481,11 +558,13 @@ def main() -> None:
         resume_epoch,
         args.save_interval,
         "bc",
+        args.log_interval,
     )
 
     dagger_metadata: list[dict] = []
     total_epochs = resume_epoch + requested_epochs
     for iteration in range(args.dagger_iterations):
+        log_progress(f"[dagger{iteration + 1}] iteration start current_total_epoch={total_epochs}")
         new_obs, new_actions, new_meta = collect_dagger_sequences(
             map_configs,
             train_cfg,
@@ -498,6 +577,10 @@ def main() -> None:
         )
         obs_sequences.extend(new_obs)
         action_sequences.extend(new_actions)
+        log_progress(
+            f"[dagger{iteration + 1}] appended sequences={len(new_obs)} "
+            f"total_sequences={len(obs_sequences)}"
+        )
         for row in new_meta:
             row["iteration"] = iteration + 1
         dagger_metadata.extend(new_meta)
@@ -516,22 +599,29 @@ def main() -> None:
                 total_epochs,
                 args.save_interval,
                 f"dagger{iteration + 1}",
+                args.log_interval,
             )
         )
         total_epochs += args.dagger_epochs
 
     save_checkpoint(model, optimizer, run_dir, total_epochs, policy_name, hidden_size, model_kwargs)
+    log_progress(f"[checkpoint] saved final latest.pt global_epoch={total_epochs}")
     with (run_dir / "bc_history.csv").open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=["epoch", "loss"])
         writer.writeheader()
         writer.writerows(history)
+    log_progress(f"[history] saved {run_dir / 'bc_history.csv'} rows={len(history)}")
     if dagger_metadata:
         with (run_dir / "dagger_sequences.csv").open("w", newline="", encoding="utf-8") as handle:
             writer = csv.DictWriter(handle, fieldnames=["iteration", "map", "steps", "success", "collision", "timeout"])
             writer.writeheader()
             writer.writerows(dagger_metadata)
+        log_progress(f"[dagger] metadata saved {run_dir / 'dagger_sequences.csv'} rows={len(dagger_metadata)}")
     if not args.no_final_eval:
-        print(evaluate_maps(map_configs, train_cfg, model, run_dir, "pure_eval", device))
+        log_progress("[eval] final pure policy eval start")
+        print(evaluate_maps(map_configs, train_cfg, model, run_dir, "pure_eval", device), flush=True)
+        log_progress("[eval] final pure policy eval done")
+    log_progress("[run] done")
 
 
 if __name__ == "__main__":
