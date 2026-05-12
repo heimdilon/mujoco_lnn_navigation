@@ -44,6 +44,21 @@ eğitildi. Saf politika değerlendirmesinde 22 custom harita ve 2 dinamik harita
 \code{dynamic\_crossing} üzerinde yoğunlaştı; timeout gözlenmedi.
 \end{abstract}
 
+\section{Yönetici Özeti ve PDF Dashboard}
+
+Raporun görsel katmanı etkileşimli dashboard yerine doğrudan PDF içinde okunacak
+statik paneller olarak hazırlandı. Bu nedenle tüm özetler PNG çıktısı olarak
+LaTeX'e bağlanır; aynı kaynak veriden yeniden üretilebilir ve PDF render hattını
+bozmaz.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{kpi_dashboard.png}
+\caption{Haftalık KPI dashboard'u. Üst kartlar modelin genel sonucunu, alt barlar
+train/holdout ve custom/dynamic kırılımını gösterir.}
+\label{fig:kpi_dashboard}
+\end{figure}
+
 \section{Haftanın Hedefi ve Çıktıları}
 
 Haftanın başlangıç hedefi iki parçadan oluşuyordu: modeli dinamik haritalarda
@@ -216,6 +231,23 @@ Toplam & 24 & 21/24 & 3/24 & 0/24 \\
 
 \begin{figure}[H]
 \centering
+\includegraphics[width=\linewidth]{map_risk_matrix.png}
+\caption{Harita risk matrisi. Her kutu bir haritayı temsil eder; renk sonuç
+tipini, alt metin ortalama episode adımını ve hedefe kalan mesafeyi gösterir.}
+\label{fig:map_risk_matrix}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{steps_distance_scatter.png}
+\caption{Ortalama episode adımı ile final hedef mesafesi arasındaki dağılım.
+Başarılı haritalar hedef bandında kümelenirken üç collision haritası final
+mesafede belirgin biçimde ayrışmaktadır.}
+\label{fig:steps_distance_scatter}
+\end{figure}
+
+\begin{figure}[H]
+\centering
 \includegraphics[width=\linewidth]{group_outcomes.png}
 \caption{Başarı, çarpışma ve timeout oranlarının train/holdout ve custom/dynamic
 kırılımı. Dinamik holdout senaryosu şu an modelin en zayıf noktasıdır.}
@@ -261,6 +293,14 @@ doğrudan çarpışmadır.}
 \label{fig:failed_rollouts}
 \end{figure}
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{failure_cases_panel.png}
+\caption{Kalan üç failure case için rollout görüntüsü ve sayısal özet. Bu panel,
+sonraki hafta çıkarılacak LiDAR/aksiyon zaman serisi analizine giriş noktasıdır.}
+\label{fig:failure_cases_panel}
+\end{figure}
+
 \section{Önceki Modele Göre İlerleme}
 
 Önceki \code{cfc\_radius010\_custom22\_dagger2} modeli aynı 24 haritalık
@@ -284,6 +324,15 @@ timeout/başarısızlık. \\
 \bottomrule
 \end{tabularx}
 \end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{model_delta_grid.png}
+\caption{Eski tek katmanlı CfC ile yeni Deep CfC modelinin harita bazlı
+karşılaştırması. Yeşil alt şeritler yeni modelin kazandığı haritaları,
+kırmızı alt şeritler hâlâ çözülmeyen failure case'leri gösterir.}
+\label{fig:model_delta_grid}
+\end{figure}
 
 \section{Literatür Notu ve Konumlandırma}
 
