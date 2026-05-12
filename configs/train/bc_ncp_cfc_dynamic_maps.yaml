@@ -1,0 +1,23 @@
+policy: ncp_cfc
+hidden_size: 64
+epochs: 600
+learning_rate: 0.0004
+episodes_per_map: 4
+max_steps: 900
+goal_observation_max: 10.0
+waypoint_resolution: 0.10
+waypoint_radius: 0.30
+dense_waypoints: true
+batch_sequences: 2
+action_loss: mse
+early_weight_steps: 120
+early_weight: 5.0
+near_obstacle_ray: 0.24
+near_obstacle_weight: 5.0
+model_kwargs:
+  ncp_units: 48
+  ncp_output_size: 16
+  sparsity_level: 0.5
+  wiring_seed: 22222
+  dt: 0.08
+  cfc_mode: default

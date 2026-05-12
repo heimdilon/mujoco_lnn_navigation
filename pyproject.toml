@@ -11,7 +11,7 @@ requires-python = ">=3.10"
 dependencies = [
   "mujoco>=3.1",
   "torch>=2.1",
-  "ncps>=1.0.1",
+  "ncps==0.0.2",
   "numpy>=1.24",
   "pyyaml>=6.0",
   "pillow>=10.0",

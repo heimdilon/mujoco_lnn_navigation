@@ -6,12 +6,18 @@ inceler. Ana yöntem saf LNN/CfC politikasıdır. Değerlendirme sırasında saf
 filter, otomatik waypoint veya kural tabanlı kontrol kullanılmaz; aksiyon
 doğrudan öğrenilmiş politikadan gelir.
 
-[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/heimdilon/mujoco_lnn_navigation/blob/master/notebooks/colab_custom22_training.ipynb)
+[![Open Deep CfC in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/heimdilon/mujoco_lnn_navigation/blob/master/notebooks/colab_custom22_training.ipynb)
+[![Open NCP Phase 1 in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/heimdilon/mujoco_lnn_navigation/blob/master/notebooks/colab_ncp_phase1_training.ipynb)
 
 ## Güncel Durum
 
 Son deneyde `cfc_deep192_custom22_dynamic_dagger2` modeli Colab üzerinde
 sıfırdan eğitildi ve 22 custom harita + 2 dinamik harita üzerinde test edildi.
+
+Yeni Phase 1 adayı `ncp_cfc_phase1`, AutoNCP-wired CfC omurgası kullanır:
+`obs(38) -> Linear(38, 64) + Tanh -> AutoNCP CfC(units=48, output=16) ->
+actor/critic`. Bu model yaklaşık 15K parametredir ve Colab'da sıfırdan eğitim
+için ayrı notebook ile eklenmiştir.
 
 | Model | Mimari | Harita | Başarı | Çarpışma | Timeout |
 | --- | --- | ---: | ---: | ---: | ---: |
@@ -100,30 +106,32 @@ Rollout PNG/GIF çıktıları hareketli engel izlerini de gösterir.
 Notebook:
 
 - [`notebooks/colab_custom22_training.ipynb`](notebooks/colab_custom22_training.ipynb)
+- [`notebooks/colab_ncp_phase1_training.ipynb`](notebooks/colab_ncp_phase1_training.ipynb)
 
 Colab üzerinde:
 
 1. `Runtime > Change runtime type > GPU` seç.
 2. Notebook'u üstten alta çalıştır.
-3. Sıfırdan eğitim için `RESUME_CHECKPOINT = ""` boş kalmalı.
+3. NCP Phase 1 için `colab_ncp_phase1_training.ipynb` notebook'unu kullan.
+4. Notebook sıfırdan eğitim yapar; resume checkpoint kullanılmaz.
 
 Varsayılan güncel ayarlar:
 
 ```python
-RUN_NAME = "cfc_deep192_custom22_dynamic_dagger2"
+RUN_NAME = "ncp_cfc_phase1"
 SPLIT_CONFIG = "configs/splits/custom22_dynamic_seed25462877008.yaml"
-TRAIN_CONFIG = "configs/train/bc_cfc_deep192_dynamic_maps.yaml"
-BC_EPOCHS_FROM_SCRATCH = 600
+TRAIN_CONFIG = "configs/train/bc_ncp_cfc_dynamic_maps.yaml"
 DAGGER_ITERATIONS = 2
 ```
 
 Eğitim sonunda beklenen checkpoint:
 
 ```text
-results/cfc_deep192_custom22_dynamic_dagger2/latest.pt
+results/ncp_cfc_phase1/latest.pt
 ```
 
-Not: Büyük checkpoint dosyaları ve `results/` klasörü Git'e eklenmez.
+Notebook ayrıca 24 haritalık değerlendirmeyi `results/ncp_cfc_phase1_eval_all24/summary.csv`
+altına yazar. Büyük checkpoint dosyaları ve `results/` klasörü Git'e eklenmez.
 
 ## Yerel Kurulum
 
@@ -267,4 +275,5 @@ report/                  Ana rapor, haftalık raporlar ve PDF çıktıları
 
 - `results/` ve büyük `.pt` checkpoint dosyaları `.gitignore` ile dışarıda tutulur.
 - GitHub'daki Colab rozeti `master` branch'ini açar.
-- Güncel notebook sıfırdan `cfc_deep192_custom22_dynamic_dagger2` deneyini çalıştıracak şekilde ayarlanmıştır.
+- `colab_custom22_training.ipynb` mevcut Deep CfC baseline deneyini çalıştırır.
+- `colab_ncp_phase1_training.ipynb` sıfırdan `ncp_cfc_phase1` NCP-wired CfC deneyini çalıştırır.

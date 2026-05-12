@@ -28,7 +28,23 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--train-config", required=True)
     parser.add_argument("--run-name", required=True)
     parser.add_argument("--resume", default=None)
-    parser.add_argument("--policy", choices=["mlp", "cfc", "lnn", "cfc_deep", "lnn_deep", "deep_lnn", "gru", "lstm"], default=None)
+    parser.add_argument(
+        "--policy",
+        choices=[
+            "mlp",
+            "cfc",
+            "lnn",
+            "cfc_deep",
+            "lnn_deep",
+            "deep_lnn",
+            "ncp",
+            "ncp_cfc",
+            "ncp_lnn",
+            "gru",
+            "lstm",
+        ],
+        default=None,
+    )
     parser.add_argument("--hidden-size", type=int, default=None)
     parser.add_argument("--learning-rate", type=float, default=None)
     parser.add_argument("--epochs", type=int, default=None)
@@ -313,6 +329,7 @@ def save_checkpoint(
     epoch: int,
     policy_name: str,
     hidden_size: int,
+    model_kwargs: dict | None = None,
 ) -> None:
     torch.save(
         {
@@ -322,6 +339,7 @@ def save_checkpoint(
             "policy": policy_name,
             "policy_impl": getattr(model, "policy_impl", policy_name),
             "hidden_size": hidden_size,
+            "model_kwargs": dict(model_kwargs or {}),
             "training": "behavioral_cloning_from_astar_teacher",
             "eval_requires_astar": False,
         },
@@ -338,6 +356,7 @@ def train_epochs(
     run_dir: Path,
     policy_name: str,
     hidden_size: int,
+    model_kwargs: dict | None,
     epochs: int,
     start_epoch: int,
     save_interval: int,
@@ -367,7 +386,7 @@ def train_epochs(
         history.append(row)
         pbar.set_postfix(loss=f"{row['loss']:.5f}", sequences=len(obs_sequences))
         if save_interval > 0 and epoch % save_interval == 0:
-            save_checkpoint(model, optimizer, run_dir, epoch, policy_name, hidden_size)
+            save_checkpoint(model, optimizer, run_dir, epoch, policy_name, hidden_size, model_kwargs)
     return history
 
 
@@ -395,7 +414,8 @@ def main() -> None:
 
     policy_name = str(train_cfg.get("policy", "gru"))
     hidden_size = int(train_cfg.get("hidden_size", 128))
-    model = build_actor_critic(policy_name, 38, 2, hidden_size).to(device)
+    model_kwargs = dict(train_cfg.get("model_kwargs") or {})
+    model = build_actor_critic(policy_name, 38, 2, hidden_size, **model_kwargs).to(device)
     optimizer_state = None
     resume_epoch = 0
     if args.resume:
@@ -423,6 +443,7 @@ def main() -> None:
         run_dir,
         policy_name,
         hidden_size,
+        model_kwargs,
         requested_epochs,
         resume_epoch,
         args.save_interval,
@@ -457,6 +478,7 @@ def main() -> None:
                 run_dir,
                 policy_name,
                 hidden_size,
+                model_kwargs,
                 args.dagger_epochs,
                 total_epochs,
                 args.save_interval,
@@ -465,7 +487,7 @@ def main() -> None:
         )
         total_epochs += args.dagger_epochs
 
-    save_checkpoint(model, optimizer, run_dir, total_epochs, policy_name, hidden_size)
+    save_checkpoint(model, optimizer, run_dir, total_epochs, policy_name, hidden_size, model_kwargs)
     with (run_dir / "bc_history.csv").open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=["epoch", "loss"])
         writer.writeheader()

@@ -308,7 +308,13 @@ class RecurrentActorCritic(BaseActorCritic):
         return self.actor(output), self.critic(output).squeeze(-1)
 
 
-def build_actor_critic(policy: str, obs_dim: int, action_dim: int, hidden_size: int = 128) -> BaseActorCritic:
+def build_actor_critic(
+    policy: str,
+    obs_dim: int,
+    action_dim: int,
+    hidden_size: int = 128,
+    **model_kwargs,
+) -> BaseActorCritic:
     policy = policy.lower()
     if policy == "mlp":
         return MlpActorCritic(obs_dim, action_dim, hidden_size)
@@ -316,6 +322,9 @@ def build_actor_critic(policy: str, obs_dim: int, action_dim: int, hidden_size: 
         return CfCActorCritic(obs_dim, action_dim, hidden_size)
     if policy in {"cfc_deep", "lnn_deep", "deep_lnn"}:
         return DeepCfCActorCritic(obs_dim, action_dim, hidden_size)
+    if policy in {"ncp", "ncp_cfc", "ncp_lnn"}:
+        from mujoco_lnn_nav.models.ncp_policies import NcpCfCActorCritic
+        return NcpCfCActorCritic(obs_dim, action_dim, encoder_dim=hidden_size, **model_kwargs)
     if policy in {"gru", "lstm"}:
         return RecurrentActorCritic(obs_dim, action_dim, hidden_size, kind=policy)
     raise ValueError(f"Unknown policy type: {policy}")
