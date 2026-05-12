@@ -8,7 +8,8 @@ goal_observation_max: 10.0
 waypoint_resolution: 0.10
 waypoint_radius: 0.30
 dense_waypoints: true
-batch_sequences: 2
+batch_sequences: 8
+bucket_by_length: true
 action_loss: mse
 early_weight_steps: 120
 early_weight: 5.0

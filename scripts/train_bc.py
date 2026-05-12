@@ -46,6 +46,11 @@ def parse_args() -> argparse.Namespace:
         default=None,
     )
     parser.add_argument("--hidden-size", type=int, default=None)
+    parser.add_argument("--batch-sequences", type=int, default=None)
+    bucket_group = parser.add_mutually_exclusive_group()
+    bucket_group.add_argument("--bucket-by-length", dest="bucket_by_length", action="store_true")
+    bucket_group.add_argument("--no-bucket-by-length", dest="bucket_by_length", action="store_false")
+    parser.set_defaults(bucket_by_length=None)
     parser.add_argument("--learning-rate", type=float, default=None)
     parser.add_argument("--epochs", type=int, default=None)
     parser.add_argument("--save-interval", type=int, default=20)
@@ -275,6 +280,27 @@ def collate_sequence_batch(
     return obs_batch, action_batch, valid
 
 
+def make_epoch_batches(
+    obs_sequences: list[torch.Tensor],
+    batch_size: int,
+    bucket_by_length: bool,
+) -> list[list[int]]:
+    if not bucket_by_length:
+        order = torch.randperm(len(obs_sequences)).tolist()
+        return [order[start : start + batch_size] for start in range(0, len(order), batch_size)]
+
+    sorted_indices = sorted(range(len(obs_sequences)), key=lambda idx: int(obs_sequences[idx].shape[0]))
+    batches = [sorted_indices[start : start + batch_size] for start in range(0, len(sorted_indices), batch_size)]
+    shuffled_batches = []
+    for batch_idx in torch.randperm(len(batches)).tolist():
+        batch = batches[batch_idx]
+        if len(batch) > 1:
+            perm = torch.randperm(len(batch)).tolist()
+            batch = [batch[idx] for idx in perm]
+        shuffled_batches.append(batch)
+    return shuffled_batches
+
+
 def sequence_batch_loss(
     model,
     obs_batch: torch.Tensor,
@@ -366,10 +392,13 @@ def train_epochs(
     pbar = tqdm(range(epochs), desc=label)
     for local_epoch in pbar:
         losses = []
-        order = torch.randperm(len(obs_sequences)).tolist()
         batch_size = max(1, int(train_cfg.get("batch_sequences", 1)))
-        for start in range(0, len(order), batch_size):
-            batch_indices = order[start : start + batch_size]
+        batches = make_epoch_batches(
+            obs_sequences,
+            batch_size,
+            bucket_by_length=bool(train_cfg.get("bucket_by_length", False)),
+        )
+        for batch_indices in batches:
             if len(batch_indices) == 1:
                 idx = batch_indices[0]
                 loss = sequence_loss(model, obs_sequences[idx], action_sequences[idx], train_cfg)
@@ -398,6 +427,10 @@ def main() -> None:
         train_cfg["policy"] = args.policy
     if args.hidden_size is not None:
         train_cfg["hidden_size"] = args.hidden_size
+    if args.batch_sequences is not None:
+        train_cfg["batch_sequences"] = args.batch_sequences
+    if args.bucket_by_length is not None:
+        train_cfg["bucket_by_length"] = args.bucket_by_length
     if args.learning_rate is not None:
         train_cfg["learning_rate"] = args.learning_rate
     if args.epochs is not None:

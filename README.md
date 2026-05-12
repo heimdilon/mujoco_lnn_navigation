@@ -122,8 +122,13 @@ EXPERIMENT = "s030"
 RUN_NAME = "ncp_cfc_s030_phase1"
 SPLIT_CONFIG = "configs/splits/custom22_dynamic_seed25462877008.yaml"
 TRAIN_CONFIG = "configs/train/bc_ncp_cfc_s030_dynamic_maps.yaml"
+BATCH_SEQUENCES = 8
 DAGGER_ITERATIONS = 2
 ```
+
+RTX 6000/Ada gibi GPU'larda NCP notebook'u `batch_sequences=8` ve
+`bucket_by_length=true` ile çalışır. Bellek hatası yoksa `BATCH_SEQUENCES` değeri
+12 veya 16 denenebilir; OOM olursa 4'e düşür.
 
 NCP ablation seçenekleri:
 
