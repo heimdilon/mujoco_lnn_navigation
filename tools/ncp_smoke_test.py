@@ -7,6 +7,7 @@ the same path that real BC training will take.
 
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -19,8 +20,21 @@ sys.path.insert(0, str(ROOT / "source"))
 from mujoco_lnn_nav.models.policies import build_actor_critic
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Smoke-test one NCP-wired CfC train config.")
+    parser.add_argument(
+        "--train-config",
+        default="configs/train/bc_ncp_cfc_dynamic_maps.yaml",
+        help="Train config YAML path, relative to repo root or absolute.",
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
-    cfg_path = ROOT / "configs" / "train" / "bc_ncp_cfc_dynamic_maps.yaml"
+    args = parse_args()
+    cfg_path = Path(args.train_config)
+    if not cfg_path.is_absolute():
+        cfg_path = ROOT / cfg_path
     with cfg_path.open("r", encoding="utf-8") as handle:
         cfg = yaml.safe_load(handle)
 
@@ -77,7 +91,7 @@ def main() -> None:
     print("[6] Wiring diagram export")
     out_dir = ROOT / "report" / "figures"
     out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / "ncp_wiring_phase1_smoke.png"
+    out_path = out_dir / f"{cfg_path.stem}_wiring_smoke.png"
     try:
         model.save_wiring_diagram(str(out_path))
         print(f"    saved: {out_path}")

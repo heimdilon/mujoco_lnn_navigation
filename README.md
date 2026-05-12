@@ -118,19 +118,29 @@ Colab üzerinde:
 Varsayılan güncel ayarlar:
 
 ```python
-RUN_NAME = "ncp_cfc_phase1"
+EXPERIMENT = "s030"
+RUN_NAME = "ncp_cfc_s030_phase1"
 SPLIT_CONFIG = "configs/splits/custom22_dynamic_seed25462877008.yaml"
-TRAIN_CONFIG = "configs/train/bc_ncp_cfc_dynamic_maps.yaml"
+TRAIN_CONFIG = "configs/train/bc_ncp_cfc_s030_dynamic_maps.yaml"
 DAGGER_ITERATIONS = 2
 ```
+
+NCP ablation seçenekleri:
+
+| `EXPERIMENT` | Run adı | Tek değişiklik |
+| --- | --- | --- |
+| `base` | `ncp_cfc_phase1` | İlk koşu: 48 units, output 16, sparsity 0.5 |
+| `s030` | `ncp_cfc_s030_phase1` | `sparsity_level: 0.5 -> 0.3` |
+| `u64` | `ncp_cfc_u64_phase1` | `ncp_units: 48 -> 64` |
+| `u64_o24_s030` | `ncp_cfc_u64_o24_s030_phase1` | 64 units, output 24, sparsity 0.3 |
 
 Eğitim sonunda beklenen checkpoint:
 
 ```text
-results/ncp_cfc_phase1/latest.pt
+results/ncp_cfc_s030_phase1/latest.pt
 ```
 
-Notebook ayrıca 24 haritalık değerlendirmeyi `results/ncp_cfc_phase1_eval_all24/summary.csv`
+Notebook ayrıca 24 haritalık değerlendirmeyi `results/ncp_cfc_s030_phase1_eval_all24/summary.csv`
 altına yazar. Büyük checkpoint dosyaları ve `results/` klasörü Git'e eklenmez.
 
 ## Yerel Kurulum
